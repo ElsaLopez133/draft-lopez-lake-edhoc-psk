@@ -5,11 +5,11 @@
 LAKE Working Group                                        E. Lopez-Perez
 Internet-Draft                                                     Inria
 Intended status: Informational                               G. Selander
-Expires: 26 July 2025                                     J. P. Mattsson
+Expires: 7 August 2025                                    J. P. Mattsson
                                                                 Ericsson
                                                           R. Marin-Lopez
                                                     University of Murcia
-                                                         22 January 2025
+                                                         3 February 2025
 
 
                         EDHOC PSK authentication
@@ -56,7 +56,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 26 July 2025.
+   This Internet-Draft will expire on 7 August 2025.
 
 Copyright Notice
 
@@ -303,46 +303,35 @@ IV_3          = EDHOC_KDF( PRK_4e3m,    TBD, TH_3,  iv_length  )
    message_3 SHALL be a CBOR sequence, as defined below:
 
    message_3 = (
-     CIPHERTEXT_3: << CIPHERTEXT_SEQUENCE >>
+     CIPHERTEXT_3A: bstr,
+     CIPHERTEXT_3B: bstr,
    )
-
-   ; This defines an array, the elements of
-   ; which are to be used in a CBOR Sequence:
-
-   CIPHERTEXT_SEQUENCE = [CIPHERTEXT_3A, CIPHERTEXT_3B]
-
-   CIPHERTEXT_3A = bstr
-   CIPHERTEXT_3B = bstr
 
    where:
 
-   *  CIPHERTEXT_3 is CBOR byte string, with value the binary
-      representation of a CBOR Sequence composed of the following two
-      elements:
+   *  CIPHERTEXT_3A is CBOR byte string, with value calculated by means
+      of a binary additive stream cipher, XORing a KESYSTREAM_3
+      generated with EDHOC_Expand and the following plaintext:
 
-      -  CIPHERTEXT_3A is CBOR byte string, with value calculated by
-         means of a binary additive stream cipher, XORing a KESYSTREAM_3
-         generated with EDHOC_Expand and the following plaintext:
+      -  PLAINTEXT_3A = ( ID_CRED_PSK )
 
-         o  PLAINTEXT_3A = ( ID_CRED_PSK )
+   *  CIPHERTEXT_3B is the 'ciphertext' of COSE_Encrypt0 object as
+      defined in Section 5.2 (https://www.rfc-editor.org/rfc/
+      rfc9528.html#section-5.2) and Section 5.3 of RFC9528
+      (https://www.rfc-editor.org/rfc/rfc9528.html#section-5.3), with
+      the EDHOC AEAD algorithm of the selected cipher suite, using the
+      encryption key K_3, the initialization vector IV_3 (if used by the
+      AEAD algorithm), the parameters described in Section 5.2
+      (https://www.rfc-editor.org/rfc/rfc9528.html#section-5.2),
+      plaintext PLAINTEXT_3B and the following parameters as input:
 
-      -  CIPHERTEXT_3B is the 'ciphertext' of COSE_Encrypt0 object as
-         defined in Section 5.2 (https://www.rfc-editor.org/rfc/
-         rfc9528.html#section-5.2) and Section 5.3 of RFC9528
-         (https://www.rfc-editor.org/rfc/rfc9528.html#section-5.3), with
-         the EDHOC AEAD algorithm of the selected cipher suite, using
-         the encryption key K_3, the initialization vector IV_3 (if used
-         by the AEAD algorithm), the parameters described in Section 5.2
-         (https://www.rfc-editor.org/rfc/rfc9528.html#section-5.2),
-         plaintext PLAINTEXT_3B and the following parameters as input:
+      -  protected = h''
 
-         o  protected = h''
+      -  external_aad = << Enc(ID_CRED_PSK), TH_3 >>
 
-         o  external_aad = << Enc(ID_CRED_PSK), TH_3 >>
+      -  K_3 and IV_3 as defined in Section 5.2 (Section 5.2)
 
-         o  K_3 and IV_3 as defined in Section 5.2 (Section 5.2)
-
-         o  PLAINTEXT_3B = ( ? EAD_3 )
+      -  PLAINTEXT_3B = ( ? EAD_3 )
 
    The Initiator computes TH_4 = H( TH_3, ID_CRED_PSK, PLAINTEXT_3B,
    CRED_PSK ), defined in Section 5.2 (Section 5.2).
