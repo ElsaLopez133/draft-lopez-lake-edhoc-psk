@@ -5,11 +5,11 @@
 LAKE Working Group                                        E. Lopez-Perez
 Internet-Draft                                                     Inria
 Intended status: Informational                               G. Selander
-Expires: 7 August 2025                                    J. P. Mattsson
+Expires: 8 August 2025                                    J. P. Mattsson
                                                                 Ericsson
                                                           R. Marin-Lopez
                                                     University of Murcia
-                                                         3 February 2025
+                                                         4 February 2025
 
 
                         EDHOC PSK authentication
@@ -56,7 +56,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 7 August 2025.
+   This Internet-Draft will expire on 8 August 2025.
 
 Copyright Notice
 
@@ -87,14 +87,10 @@ Table of Contents
      5.3.  Message 3
      5.4.  Message 4
    6.  Security Considerations
-     6.1.  Identity protection
-     6.2.  Number of messages
-     6.3.  External Authorization Data
-     6.4.  Attacks
-   7.  Privacy Considerations
-   8.  Unified Approach and Recommendations
-   9.  IANA Considerations
-   10. Normative References
+     6.1.  Post Quantum Considerations
+   7.  Unified Approach and Recommendations
+   8.  IANA Considerations
+   9.  Normative References
    Acknowledgments
    Authors' Addresses
 
@@ -102,12 +98,15 @@ Table of Contents
 
 1.1.  Motivation
 
-   Pre-shared key (PSK) authentication method provides a balance between
-   security and computational efficiency.  This authentication method
-   was proposed in the first I-Ds of Ephemeral Diffie-Hellman Over COSE
-   (EDHOC) [RFC9528], and was ruled out to speed out the development
-   process.  However, there is now a renewed effort to reintroduce PSK
-   authentication, making this draft an update to the [RFC9528].
+   The growth of IoT environemnts has led to a renwed effort to expand
+   the current authentication mechanisms of EDHOC to inlcude Pre-Shared
+   Keys (PSK), making this draft an update to the [RFC9528].  In fact,
+   this authentication method was proposed in the first I-Ds of
+   Ephemeral Diffie-Hellman Over COSE (EDHOC) [RFC9528], and was ruled
+   out to speed out the development process.  The prevalence of PSK-
+   based authentication is a main reason for its support.  Even
+   protocols taht are not oriented towards IoT devices, such as TLS 1.3,
+   have included PSK as an authentication method [RFC4279].
 
    EDHOC with PSK authentication could be beneficial for existing
    systems where two nodes have been provided with a PSK from other
@@ -369,42 +368,65 @@ IV_3          = EDHOC_KDF( PRK_4e3m,    TBD, TH_3,  iv_length  )
        CRED_PSK and ID_CRED_PSK helps mitigate long-term privacy risks
        associated with static key identifiers.
 
-6.1.  Identity protection
+   PSK authentication method introduces changes with respect to the
+   current specification of EDHOC [RFC9528].  The protocol differs from
+   EDHOC in the following ways:
 
-   The current EDHOC methods protect the Initiator’s identity against
-   active attackers and the Responder’s identity against passive
-   attackers (See Section 9.1 of RFC9528 (https://www.rfc-
-   editor.org/rfc/rfc9528.html#section-9.1)).  With EDHOC-PSK
-   authentication method, both the Initiator's and Responder's
-   identities are protected against passive attackers, but not against
-   active attackers.
+   *  ID_CRED_PSK is encrypted and sent in message 3, XOR encrypted with
+      a keystream derived from the ephemeral shared secret G_XY.  As a
+      consequence, contrary totThe current EDHOC methods that protect
+      the Initiator’s identity against active attackers and the
+      Responder’s identity against passive attackers (See Section 9.1 of
+      RFC9528 (https://www.rfc-editor.org/rfc/rfc9528.html#section-
+      9.1)), EDHOC-PSK provides identity protection for both the
+      Initator and the Responder against passive attackers.
 
-6.2.  Number of messages
+   *  Mutual authentication depends on the security of the session key,
+      i.e., the protocol's confidentiality.  Both properties hold as
+      long as the PSK remains secret.
 
-   The current EDHOC protocol consists of three mandatory messages and
-   an optional fourth message.  In the case of EDHOC-PSK authentication
-   method, message_4 remains optional, but mutual authentication is not
-   guaranteed without it, or an OSCORE message or any application data
-   that confirms that the Responder owns the PSK.  Additionally, with
-   this fourth message the protocol achieves explicit key confirmation
-   in addition to mutual authentication.
+   *  Both the ephemeral components and the PSK are used as inputs of
+      Key Derivation Function (KDF) to derive intermedaite keys (PRK).
+      This hybrid approach guarantees as well post-quantum security, as
+      defined in Section 6.1 (Section 6.1).
 
-6.3.  External Authorization Data
+   *  The current EDHOC protocol consists of three mandatory messages
+      and an optional fourth message.  In the case of EDHOC-PSK
+      authentication method, message_4 remains optional, but mutual
+      authentication is not guaranteed without it, or an OSCORE message
+      or any application data that confirms that the Responder owns the
+      PSK.  Additionally, with this fourth message the protocol achieves
+      explicit key confirmation in addition to mutual authentication.
 
-   The Initiator and Responder can send information in EAD_3 and EAD_4
-   or in OSCORE messages in parallel with message_3 and message_4.  This
-   is possible because the Initiator knows that only the Responder with
-   access to the CRED_PSK can decrypt the information.
+   *  Similarly to [RFC9528], EDHOC-PSK provides external authorization
+      data protection.
 
-6.4.  Attacks
+6.1.  Post Quantum Considerations
 
-   EDHOC-PSK authentication method offers privacy and resistance to
-   passive attacks but might be vulnerable to certain active attacks due
-   to delayed authentication.
+   Recent achievements in developing quantum computers demonstrate that
+   it is probably feasible to build one that is cryptographically
+   significant.  If such a computer is implemented, many of the
+   cryptographic algorithms and protocols currently in use would be
+   insecure.  A quantum computer would be able to solve Diffie-Hellman
+   (DH) and Elliptic Curve Diffie-Hellman (ECDH) problems in polynomial
+   time.
 
-7.  Privacy Considerations
+   EDCHOC with pre-shared keys would not be vulnerable to quantum
+   attacks because those keys are used as inputs to the key derivation
+   function.  The use of intermediate keys derived through key
+   derivation functions ensure that the message is not immediately
+   compromised if the symmetrically distributed key (PSK) is
+   compromised, or if the algorithm used to distribute keys
+   asymmetrically (DH) is broken.  If the pre-shared key has sufficient
+   entropy and the Key Derivation Function (KDF), encryption, and
+   authentication transforms are quantum secure, then the resulting
+   system is believed to be quantum secure.  Therefore, provided that
+   the PSK remains secret, EDHOC-PSK provides confidentiality, mutual
+   authentication and Perfect Forward Secrecy (PFS) even in the presence
+   of quantum attacks.  What is more, the key exchange is still a key
+   agreement where both parties contribute with randomness.
 
-8.  Unified Approach and Recommendations
+7.  Unified Approach and Recommendations
 
    For use cases involving the transmission of application data,
    application data can be sent concurrently with message_3, maintaining
@@ -426,16 +448,21 @@ IV_3          = EDHOC_KDF( PRK_4e3m,    TBD, TH_3,  iv_length  )
    for the privacy properties when using asymmetric authentication but
    is not significant in the context of symmetric key usage.
 
-9.  IANA Considerations
+8.  IANA Considerations
 
    This document has no IANA actions.
 
-10.  Normative References
+9.  Normative References
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
               DOI 10.17487/RFC2119, March 1997,
               <https://www.rfc-editor.org/rfc/rfc2119>.
+
+   [RFC4279]  Eronen, P., Ed. and H. Tschofenig, Ed., "Pre-Shared Key
+              Ciphersuites for Transport Layer Security (TLS)",
+              RFC 4279, DOI 10.17487/RFC4279, December 2005,
+              <https://www.rfc-editor.org/rfc/rfc4279>.
 
    [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
               2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
