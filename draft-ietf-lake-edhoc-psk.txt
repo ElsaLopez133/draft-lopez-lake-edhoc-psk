@@ -5,14 +5,14 @@
 LAKE Working Group                                        E. Lopez-Perez
 Internet-Draft                                                     Inria
 Intended status: Standards Track                             G. Selander
-Expires: 22 August 2025                                J. Preuß Mattsson
+Expires: 28 August 2025                                J. Preuß Mattsson
                                                                 Ericsson
                                                           R. Marin-Lopez
                                                     University of Murcia
-                                                        18 February 2025
+                                                        24 February 2025
 
 
-             EDHOC with Pre-Shared Key (PSK) Authentication
+             EDHOC Authenticated with Pre-Shred Keys (PSK)
                     draft-ietf-lake-edhoc-psk-latest
 
 Abstract
@@ -59,7 +59,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 22 August 2025.
+   This Internet-Draft will expire on 28 August 2025.
 
 Copyright Notice
 
@@ -98,18 +98,18 @@ Table of Contents
      6.1.  Identity protection
      6.2.  Mutual Authentication
      6.3.  External Authorization Data Protection
-     6.4.  PSK usage for Session Resumtpion
-       6.4.1.  Ciphersuite requirements for resumption
-       6.4.2.  Privacy Considerations for Resumption
-       6.4.3.  Security Considerations for Resumption
-     6.5.  Post Quantum Considerations
-     6.6.  Independence of Session Keys
-     6.7.  Unified Approach and Recommendations
-   7.  IANA Considerations
-     7.1.  EDHOC Method Type Registry
-     7.2.  EDHOC Exporter Label Registry
-     7.3.  EDHOC Info Label Registry
-   8.  Normative References
+     6.4.  Post Quantum Considerations
+     6.5.  Independence of Session Keys
+     6.6.  Unified Approach and Recommendations
+   7.  PSK usage for Session Resumtpion
+     7.1.  Ciphersuite Requirements for Resumption
+     7.2.  Privacy Considerations for Resumption
+     7.3.  Security Considerations for Resumption
+   8.  IANA Considerations
+     8.1.  EDHOC Method Type Registry
+     8.2.  EDHOC Exporter Label Registry
+     8.3.  EDHOC Info Label Registry
+   9.  Normative References
    Appendix A.  CDDL Definitions
    Appendix B.  Test Vectors
    Appendix C.  Change Log
@@ -126,9 +126,7 @@ Table of Contents
    approaches, PSK authentication offers greater computational
    efficiency compared to the methods outlined in [RFC9528].  The PSK
    method retains mutual authentication, asymmetric ephemeral key
-   exchange, and identity protection established by [RFC9528].  By
-   utilizing the PSK for both authentication and key derivation, this
-   method provides quantum resistance.
+   exchange, and identity protection established by [RFC9528].
 
    EDHOC with PSK authentication benefits systems where two nodes nodes
    share a Pre-Shared Key (PSK) provided out-of-band.  This applies to
@@ -155,7 +153,7 @@ Table of Contents
    credentials.  Section 4 outlines the changes to key derivation
    compared to [RFC9528], Section 5 details message formatting and
    processing, and Section 6 discusses security considerations.  How to
-   derive keys for resumption is described in Section TODO.
+   derive keys for resumption is described in Section 7.
 
 2.  Conventions and Definitions
 
@@ -421,59 +419,7 @@ Table of Contents
    follow the same security guarantees as in the original EDHOC
    specification.
 
-6.4.  PSK usage for Session Resumtpion
-
-   This section defines how PSKs are used for session resumption in
-   EDHOC.  We can distinguish between two types of resumption PSKs:
-
-   *  External PSK: a PSK established out-of-band and used for the
-      initial handshake.
-
-   *  Ressumption PSK: a key derived from a previous EDHOC session
-      specifically for resumption purposes.
-
-6.4.1.  Ciphersuite requirements for resumption
-
-   When using a resumption PSK derived from a previous EDHOC exchange:
-
-   1.  The resumption PSK MUST only be used with the same ciphersuite
-       that was used in the original EDHOC exchange, or with a
-       ciphersuite that provides equal or higher security guarantees.
-
-   2.  Implmentations SHOULD manitain a mapping between the resumption
-       PSK and its originating ciphersuite to enforce this requirement.
-
-   3.  If a resumption PSK is offered with a weaker ciphersuite than its
-       original exchange, the recipient MUST reject the connection
-       attempt.
-
-6.4.2.  Privacy Considerations for Resumption
-
-   When using resumption PSKs:
-
-   *  The same ID_CRED_PSK is reused each time EDHOC is executed with a
-      specific resumption PSK.
-
-   *  To prevent long-term tracking, implementations SHOULD periodically
-      initiate a full EDHOC exchange to generate a new resumption PSK
-      and corresponding ID_CRED_PSK.
-
-   While PSK reuse enhances efficiency by reducing the overhead of key
-   exchanges, it presents privacy risks if not managed properly through
-   periodic renewal.
-
-6.4.3.  Security Considerations for Resumption
-
-   *  Resumption PSKs MUST NOT be used for purposes other than EDHOC
-      session resumption.
-
-   *  Resumption PSKs MUST be securely stored with the same level of
-      protection as the original session keys.
-
-   *  Parties SHOULD implement mechanisms to detect and prevent
-      excessive reuse of the same resumption PSK.
-
-6.5.  Post Quantum Considerations
+6.4.  Post Quantum Considerations
 
    Recent achievements in developing quantum computers demonstrate that
    it is probably feasible to build one that is cryptographically
@@ -498,7 +444,7 @@ Table of Contents
    of quantum attacks.  What is more, the key exchange is still a key
    agreement where both parties contribute with randomness.
 
-6.6.  Independence of Session Keys
+6.5.  Independence of Session Keys
 
    NIST mandates that that an ephemeral private key shall be used in
    exactly one key-establishment transaction (see Section 5.6.3.3 of
@@ -515,7 +461,7 @@ Table of Contents
    between legitimate parties.  Assuming breach and minimizing the
    impact of compromise are fundamental zero-trust principles.
 
-6.7.  Unified Approach and Recommendations
+6.6.  Unified Approach and Recommendations
 
    For use cases involving the transmission of application data,
    application data can be sent concurrently with message_3, maintaining
@@ -537,11 +483,67 @@ Table of Contents
    for the privacy properties when using asymmetric authentication but
    is not significant in the context of symmetric key usage.
 
-7.  IANA Considerations
+7.  PSK usage for Session Resumtpion
+
+   This section defines how PSKs are used for session resumption in
+   EDHOC.  Each time EDHOC-PSK is run a new PRK_out and PRK_exporter
+   will be generated.  Following Section 4.2 of RFC9528
+   (https://www.rfc-editor.org/rfc/rfc9528.html#section-4.2),
+   EDHOC_Exporter can be used to derive both CRED_PSK and ID_CRED_PSK:
+
+   CRED_PSK = EDHOC_Exporter( 2, h'', resumption_psk_length )
+   ID_CRED_PSK = EDHOC_Exporter( 3, h'', id_cred_psk_length )
+
+7.1.  Ciphersuite Requirements for Resumption
+
+   When using a resumption PSK derived from a previous EDHOC exchange:
+
+   1.  The resumption PSK MUST only be used with the same ciphersuite
+       that was used in the original EDHOC exchange, or with a
+       ciphersuite that provides equal or higher security guarantees.
+
+   2.  Implmentations SHOULD manitain a mapping between the resumption
+       PSK and its originating ciphersuite to enforce this requirement.
+
+   3.  If a resumption PSK is offered with a weaker ciphersuite than its
+       original exchange, the recipient MUST reject the connection
+       attempt.
+
+7.2.  Privacy Considerations for Resumption
+
+   When using resumption PSKs:
+
+   *  The same ID_CRED_PSK is reused each time EDHOC is executed with a
+      specific resumption PSK.
+
+   *  To prevent long-term tracking, implementations SHOULD periodically
+      initiate a full EDHOC exchange to generate a new resumption PSK
+      and corresponding ID_CRED_PSK.  Alternatively, as stated in
+      Appendix H of RFC9528 (https://www.rfc-editor.org/rfc/
+      rfc9528.html#appendix-h), EDHOC_KeyUpdate can be used to derive a
+      new PRK_out, and consequently a new CRED_PSK and ID_CRED_PSK for
+      session resumption.
+
+   While PSK reuse enhances efficiency by reducing the overhead of key
+   exchanges, it presents privacy risks if not managed properly through
+   periodic renewal.
+
+7.3.  Security Considerations for Resumption
+
+   *  Resumption PSKs MUST NOT be used for purposes other than EDHOC
+      session resumption.
+
+   *  Resumption PSKs MUST be securely stored with the same level of
+      protection as the original session keys.
+
+   *  Parties SHOULD implement mechanisms to detect and prevent
+      excessive reuse of the same resumption PSK.
+
+8.  IANA Considerations
 
    This document has IANA actions.
 
-7.1.  EDHOC Method Type Registry
+8.1.  EDHOC Method Type Registry
 
    IANA is requested to register the following entry in the "EDHOC
    Method Type" registry under the group name "Ephemeral Diffie-Hellman
@@ -555,21 +557,23 @@ Table of Contents
 
         Figure 3: Addition to the EDHOC Method Type Registry.
 
-7.2.  EDHOC Exporter Label Registry
+8.2.  EDHOC Exporter Label Registry
 
    IANA is requested to register the following entry in the "EDHOC
    Exporter Label" registry under the group name "Ephemeral Diffie-
    Hellman Over OCSE (EDHOC)".
 
-   +------------+------------------------------+-------------------+
-   | Label      | Descritpion                  |  Reference        |
-   +============+==============================+===================+
-   |            |                              |                   |
-   +------------+------------------------------+-------------------+
++------------+------------------------------+-------------------+-------------------+
+| Label      | Descritpion                  | Change Controller | Reference         |
++============+==============================+===================+===================+
+|  2         | Resumption CRED_PSK          |       IETF        |                   |
++------------+------------------------------+-------------------+-------------------+
+|  3         | Resumption ID_CRED_PSK       |       IETF        |                   |
++------------+------------------------------+-------------------+-------------------+
 
-          Figure 4: Addition to the EDHOC Exporter Label Registry.
+       Figure 4: Addition to the EDHOC Exporter Label Registry.
 
-7.3.  EDHOC Info Label Registry
+8.3.  EDHOC Info Label Registry
 
    IANA is requested to register the following registry "EDHOC Info
    Label" under the group name "Ephemeral Diffie-Hellman Over OCSE
@@ -578,16 +582,16 @@ Table of Contents
    +------------+-----------------------+-------------------+
    | Label      |          Key          |  Reference        |
    +============+=======================+===================+
-   |  10        |       KEYSTREAM_3     |   {{key-der}}     |
+   |  12        |       KEYSTREAM_3     |   {{key-der}}     |
    +------------+-----------------------+-------------------+
-   |  11        |           K_3         |   {{key-der}}     |
+   |  13        |           K_3         |   {{key-der}}     |
    +------------+-----------------------+-------------------+
-   |  12        |          IV_3         |   {{key-der}}     |
+   |  14        |          IV_3         |   {{key-der}}     |
    +------------+-----------------------+-------------------+
 
                     Figure 5: EDHOC Info Label Registry.
 
-8.  Normative References
+9.  Normative References
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta content="Common,Latin" name="scripts">
 <meta content="initial-scale=1.0" name="viewport">
-<title>EDHOC with Pre-Shared Key (PSK) Authentication</title>
+<title>EDHOC Authenticated with Pre-Shred Keys (PSK)</title>
 <meta content="Elsa Lopez-Perez" name="author">
 <meta content="Göran Selander" name="author">
 <meta content="John Preuß Mattsson" name="author">
@@ -1045,12 +1045,12 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <table class="ears">
 <thead><tr>
 <td class="left">Internet-Draft</td>
-<td class="center">EDHOC with Pre-Shared Key (PSK) Authenti</td>
+<td class="center">EDHOC Authenticated with Pre-Shred Keys </td>
 <td class="right">February 2025</td>
 </tr></thead>
 <tfoot><tr>
 <td class="left">Lopez-Perez, et al.</td>
-<td class="center">Expires 22 August 2025</td>
+<td class="center">Expires 28 August 2025</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1063,12 +1063,12 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-ietf-lake-edhoc-psk-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2025-02-18" class="published">18 February 2025</time>
+<time datetime="2025-02-24" class="published">24 February 2025</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2025-08-22">22 August 2025</time></dd>
+<dd class="expires"><time datetime="2025-08-28">28 August 2025</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -1090,7 +1090,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 </dd>
 </dl>
 </div>
-<h1 id="title">EDHOC with Pre-Shared Key (PSK) Authentication</h1>
+<h1 id="title">EDHOC Authenticated with Pre-Shred Keys (PSK)</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
 <p id="section-abstract-1">This document specifies a Pre-Shared Key (PSK) authentication method for the Ephemeral Diffie-Hellman Over COSE (EDHOC) key exchange protocol. The PSK method enhances computational efficiency while providing mutual authentication, ephemeral key exchange, identity protection, and quantum resistance. It is particularly suited for systems where nodes share a PSK out-of-band and enables efficient session resumption with less computational overhead. This document details the PSK method flow, key derivation changes, message formatting, processing, and security considerations.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
@@ -1130,7 +1130,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 22 August 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 28 August 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1231,61 +1231,61 @@ svg :is([fill="white"], [fill^="#fff"]) {
                 <p id="section-toc.1-1.6.2.3.1"><a href="#section-6.3" class="auto internal xref">6.3</a>.  <a href="#name-external-authorization-data" class="internal xref">External Authorization Data Protection</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.4">
-                <p id="section-toc.1-1.6.2.4.1"><a href="#section-6.4" class="auto internal xref">6.4</a>.  <a href="#name-psk-usage-for-session-resum" class="internal xref">PSK usage for Session Resumtpion</a></p>
-<ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.4.2.1">
-                    <p id="section-toc.1-1.6.2.4.2.1.1"><a href="#section-6.4.1" class="auto internal xref">6.4.1</a>.  <a href="#name-ciphersuite-requirements-fo" class="internal xref">Ciphersuite requirements for resumption</a></p>
-</li>
-                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.4.2.2">
-                    <p id="section-toc.1-1.6.2.4.2.2.1"><a href="#section-6.4.2" class="auto internal xref">6.4.2</a>.  <a href="#name-privacy-considerations-for-" class="internal xref">Privacy Considerations for Resumption</a></p>
-</li>
-                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.4.2.3">
-                    <p id="section-toc.1-1.6.2.4.2.3.1"><a href="#section-6.4.3" class="auto internal xref">6.4.3</a>.  <a href="#name-security-considerations-for" class="internal xref">Security Considerations for Resumption</a></p>
-</li>
-                </ul>
+                <p id="section-toc.1-1.6.2.4.1"><a href="#section-6.4" class="auto internal xref">6.4</a>.  <a href="#name-post-quantum-considerations" class="internal xref">Post Quantum Considerations</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.5">
-                <p id="section-toc.1-1.6.2.5.1"><a href="#section-6.5" class="auto internal xref">6.5</a>.  <a href="#name-post-quantum-considerations" class="internal xref">Post Quantum Considerations</a></p>
+                <p id="section-toc.1-1.6.2.5.1"><a href="#section-6.5" class="auto internal xref">6.5</a>.  <a href="#name-independence-of-session-key" class="internal xref">Independence of Session Keys</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.6">
-                <p id="section-toc.1-1.6.2.6.1"><a href="#section-6.6" class="auto internal xref">6.6</a>.  <a href="#name-independence-of-session-key" class="internal xref">Independence of Session Keys</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.7">
-                <p id="section-toc.1-1.6.2.7.1"><a href="#section-6.7" class="auto internal xref">6.7</a>.  <a href="#name-unified-approach-and-recomm" class="internal xref">Unified Approach and Recommendations</a></p>
+                <p id="section-toc.1-1.6.2.6.1"><a href="#section-6.6" class="auto internal xref">6.6</a>.  <a href="#name-unified-approach-and-recomm" class="internal xref">Unified Approach and Recommendations</a></p>
 </li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
-            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-psk-usage-for-session-resum" class="internal xref">PSK usage for Session Resumtpion</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.1">
-                <p id="section-toc.1-1.7.2.1.1"><a href="#section-7.1" class="auto internal xref">7.1</a>.  <a href="#name-edhoc-method-type-registry" class="internal xref">EDHOC Method Type Registry</a></p>
+                <p id="section-toc.1-1.7.2.1.1"><a href="#section-7.1" class="auto internal xref">7.1</a>.  <a href="#name-ciphersuite-requirements-fo" class="internal xref">Ciphersuite Requirements for Resumption</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.2">
-                <p id="section-toc.1-1.7.2.2.1"><a href="#section-7.2" class="auto internal xref">7.2</a>.  <a href="#name-edhoc-exporter-label-regist" class="internal xref">EDHOC Exporter Label Registry</a></p>
+                <p id="section-toc.1-1.7.2.2.1"><a href="#section-7.2" class="auto internal xref">7.2</a>.  <a href="#name-privacy-considerations-for-" class="internal xref">Privacy Considerations for Resumption</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.3">
-                <p id="section-toc.1-1.7.2.3.1"><a href="#section-7.3" class="auto internal xref">7.3</a>.  <a href="#name-edhoc-info-label-registry" class="internal xref">EDHOC Info Label Registry</a></p>
+                <p id="section-toc.1-1.7.2.3.1"><a href="#section-7.3" class="auto internal xref">7.3</a>.  <a href="#name-security-considerations-for" class="internal xref">Security Considerations for Resumption</a></p>
 </li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
-            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.1">
+                <p id="section-toc.1-1.8.2.1.1"><a href="#section-8.1" class="auto internal xref">8.1</a>.  <a href="#name-edhoc-method-type-registry" class="internal xref">EDHOC Method Type Registry</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.2">
+                <p id="section-toc.1-1.8.2.2.1"><a href="#section-8.2" class="auto internal xref">8.2</a>.  <a href="#name-edhoc-exporter-label-regist" class="internal xref">EDHOC Exporter Label Registry</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.3">
+                <p id="section-toc.1-1.8.2.3.1"><a href="#section-8.3" class="auto internal xref">8.3</a>.  <a href="#name-edhoc-info-label-registry" class="internal xref">EDHOC Info Label Registry</a></p>
+</li>
+            </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
-            <p id="section-toc.1-1.9.1"><a href="#appendix-A" class="auto internal xref">Appendix A</a>.  <a href="#name-cddl-definitions" class="internal xref">CDDL Definitions</a></p>
+            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
-            <p id="section-toc.1-1.10.1"><a href="#appendix-B" class="auto internal xref">Appendix B</a>.  <a href="#name-test-vectors" class="internal xref">Test Vectors</a></p>
+            <p id="section-toc.1-1.10.1"><a href="#appendix-A" class="auto internal xref">Appendix A</a>.  <a href="#name-cddl-definitions" class="internal xref">CDDL Definitions</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
-            <p id="section-toc.1-1.11.1"><a href="#appendix-C" class="auto internal xref">Appendix C</a>.  <a href="#name-change-log" class="internal xref">Change Log</a></p>
+            <p id="section-toc.1-1.11.1"><a href="#appendix-B" class="auto internal xref">Appendix B</a>.  <a href="#name-test-vectors" class="internal xref">Test Vectors</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
-            <p id="section-toc.1-1.12.1"><a href="#appendix-D" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+            <p id="section-toc.1-1.12.1"><a href="#appendix-C" class="auto internal xref">Appendix C</a>.  <a href="#name-change-log" class="internal xref">Change Log</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13">
-            <p id="section-toc.1-1.13.1"><a href="#appendix-E" class="auto internal xref"></a><a href="#name-authors-addresses" class="internal xref">Authors' Addresses</a></p>
+            <p id="section-toc.1-1.13.1"><a href="#appendix-D" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14">
+            <p id="section-toc.1-1.14.1"><a href="#appendix-E" class="auto internal xref"></a><a href="#name-authors-addresses" class="internal xref">Authors' Addresses</a></p>
 </li>
         </ul>
 </nav>
@@ -1296,10 +1296,10 @@ svg :is([fill="white"], [fill^="#fff"]) {
       <h2 id="name-introduction">
 <a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
       </h2>
-<p id="section-1-1">This document defines a Pre-Shared Key (PSK) authentication method for the Ephemeral Diffie-Hellman Over COSE (EDHOC) key exchange protocol <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>. The PSK method balances the complexity of credential distribution with computational efficiency. While symmetrical key distribution is more complex than asymmetrical approaches, PSK authentication offers greater computational efficiency compared to the methods outlined in <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>. The PSK method retains mutual authentication, asymmetric ephemeral key exchange, and identity protection established by <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>. By utilizing the PSK for both authentication and key derivation, this method provides quantum resistance.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-1">This document defines a Pre-Shared Key (PSK) authentication method for the Ephemeral Diffie-Hellman Over COSE (EDHOC) key exchange protocol <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>. The PSK method balances the complexity of credential distribution with computational efficiency. While symmetrical key distribution is more complex than asymmetrical approaches, PSK authentication offers greater computational efficiency compared to the methods outlined in <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>. The PSK method retains mutual authentication, asymmetric ephemeral key exchange, and identity protection established by <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>.<a href="#section-1-1" class="pilcrow">¶</a></p>
 <p id="section-1-2">EDHOC with PSK authentication benefits systems where two nodes nodes share a Pre-Shared Key (PSK) provided out-of-band. This applies to scenarios like the Authenticated Key Management Architecture (AKMA) in mobile systems or the Peer and Authenticator in Extensible Authentication Protocol (EAP) systems. The PSK method enables the nodes to perform ephemeral key exchange, achieving Perfect Forward Secrecy (PFS). This ensures that even if the PSK is compromised, past communications remain secure against active attackers, while future communications are protected from passive attackers. Additionally, by leveraging the PSK for both authentication and key derivation, the method offers quantum resistance key exchange and authentication.<a href="#section-1-2" class="pilcrow">¶</a></p>
 <p id="section-1-3">Another key use case of PSK authentication in the EDHOC protocol is session resumption. This enables previously connected parties to quickly reestablish secure communication using pre-shared keys from a prior session, reducing the overhead associated with key exchange and asymmetric authentication. By using PSK authentication, EDHOC allows session keys to be refreshed with significantly lower computational overhead compared to public-key authentication.<a href="#section-1-3" class="pilcrow">¶</a></p>
-<p id="section-1-4">Section 3 provides an overview of the PSK method flow and credentials. Section 4 outlines the changes to key derivation compared to <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>, Section 5 details message formatting and processing, and Section 6 discusses security considerations. How to derive keys for resumption is described in Section TODO.<a href="#section-1-4" class="pilcrow">¶</a></p>
+<p id="section-1-4">Section 3 provides an overview of the PSK method flow and credentials. Section 4 outlines the changes to key derivation compared to <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>, Section 5 details message formatting and processing, and Section 6 discusses security considerations. How to derive keys for resumption is described in Section 7.<a href="#section-1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="conventions-and-definitions">
@@ -1642,127 +1642,127 @@ IV_3        = EDHOC_KDF( PRK_4e3m, 13, TH_3, iv_length )
 <p id="section-6.3-1">Similarly to <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>, EDHOC-PSK provides external authorization data protection. The integrity and confidentiality of EAD fields follow the same security guarantees as in the original EDHOC specification.<a href="#section-6.3-1" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="psk-usage-for-session-resumtpion">
-<section id="section-6.4">
-        <h3 id="name-psk-usage-for-session-resum">
-<a href="#section-6.4" class="section-number selfRef">6.4. </a><a href="#name-psk-usage-for-session-resum" class="section-name selfRef">PSK usage for Session Resumtpion</a>
-        </h3>
-<p id="section-6.4-1">This section defines how PSKs are used for session resumption in EDHOC. We can distinguish between two types of resumption PSKs:<a href="#section-6.4-1" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-6.4-2.1">
-            <p id="section-6.4-2.1.1">External PSK: a PSK established out-of-band and used for the initial handshake.<a href="#section-6.4-2.1.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-6.4-2.2">
-            <p id="section-6.4-2.2.1">Ressumption PSK: a key derived from a previous EDHOC session specifically for resumption purposes.<a href="#section-6.4-2.2.1" class="pilcrow">¶</a></p>
-</li>
-        </ul>
-<div id="ciphersuite-requirements-for-resumption">
-<section id="section-6.4.1">
-          <h4 id="name-ciphersuite-requirements-fo">
-<a href="#section-6.4.1" class="section-number selfRef">6.4.1. </a><a href="#name-ciphersuite-requirements-fo" class="section-name selfRef">Ciphersuite requirements for resumption</a>
-          </h4>
-<p id="section-6.4.1-1">When using a resumption PSK derived from a previous EDHOC exchange:<a href="#section-6.4.1-1" class="pilcrow">¶</a></p>
-<ol start="1" type="1" class="normal type-1" id="section-6.4.1-2">
-<li id="section-6.4.1-2.1">
-              <p id="section-6.4.1-2.1.1">The resumption PSK <span class="bcp14">MUST</span> only be used with the same ciphersuite that was used in the original EDHOC exchange, or with a ciphersuite that provides equal or higher security guarantees.<a href="#section-6.4.1-2.1.1" class="pilcrow">¶</a></p>
-</li>
-            <li id="section-6.4.1-2.2">
-              <p id="section-6.4.1-2.2.1">Implmentations <span class="bcp14">SHOULD</span> manitain a mapping between the resumption PSK and its originating ciphersuite to enforce this requirement.<a href="#section-6.4.1-2.2.1" class="pilcrow">¶</a></p>
-</li>
-            <li id="section-6.4.1-2.3">
-              <p id="section-6.4.1-2.3.1">If a resumption PSK is offered with a weaker ciphersuite than its original exchange, the recipient <span class="bcp14">MUST</span> reject the connection attempt.<a href="#section-6.4.1-2.3.1" class="pilcrow">¶</a></p>
-</li>
-          </ol>
-</section>
-</div>
-<div id="privacy-considerations-for-resumption">
-<section id="section-6.4.2">
-          <h4 id="name-privacy-considerations-for-">
-<a href="#section-6.4.2" class="section-number selfRef">6.4.2. </a><a href="#name-privacy-considerations-for-" class="section-name selfRef">Privacy Considerations for Resumption</a>
-          </h4>
-<p id="section-6.4.2-1">When using resumption PSKs:<a href="#section-6.4.2-1" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-6.4.2-2.1">
-              <p id="section-6.4.2-2.1.1">The same ID_CRED_PSK is reused each time EDHOC is executed with a specific resumption PSK.<a href="#section-6.4.2-2.1.1" class="pilcrow">¶</a></p>
-</li>
-            <li class="normal" id="section-6.4.2-2.2">
-              <p id="section-6.4.2-2.2.1">To prevent long-term tracking, implementations <span class="bcp14">SHOULD</span> periodically initiate a full EDHOC exchange to generate a new resumption PSK and corresponding ID_CRED_PSK.<a href="#section-6.4.2-2.2.1" class="pilcrow">¶</a></p>
-</li>
-          </ul>
-<p id="section-6.4.2-3">While PSK reuse enhances efficiency by reducing the overhead of key exchanges, it presents privacy risks if not managed properly through periodic renewal.<a href="#section-6.4.2-3" class="pilcrow">¶</a></p>
-</section>
-</div>
-<div id="security-considerations-for-resumption">
-<section id="section-6.4.3">
-          <h4 id="name-security-considerations-for">
-<a href="#section-6.4.3" class="section-number selfRef">6.4.3. </a><a href="#name-security-considerations-for" class="section-name selfRef">Security Considerations for Resumption</a>
-          </h4>
-<ul class="normal">
-<li class="normal" id="section-6.4.3-1.1">
-              <p id="section-6.4.3-1.1.1">Resumption PSKs <span class="bcp14">MUST NOT</span> be used for purposes other than EDHOC session resumption.<a href="#section-6.4.3-1.1.1" class="pilcrow">¶</a></p>
-</li>
-            <li class="normal" id="section-6.4.3-1.2">
-              <p id="section-6.4.3-1.2.1">Resumption PSKs <span class="bcp14">MUST</span> be securely stored with the same level of protection as the original session keys.<a href="#section-6.4.3-1.2.1" class="pilcrow">¶</a></p>
-</li>
-            <li class="normal" id="section-6.4.3-1.3">
-              <p id="section-6.4.3-1.3.1">Parties <span class="bcp14">SHOULD</span> implement mechanisms to detect and prevent excessive reuse of the same resumption PSK.<a href="#section-6.4.3-1.3.1" class="pilcrow">¶</a></p>
-</li>
-          </ul>
-</section>
-</div>
-</section>
-</div>
 <div id="post-quantum-considerations">
-<section id="section-6.5">
+<section id="section-6.4">
         <h3 id="name-post-quantum-considerations">
-<a href="#section-6.5" class="section-number selfRef">6.5. </a><a href="#name-post-quantum-considerations" class="section-name selfRef">Post Quantum Considerations</a>
+<a href="#section-6.4" class="section-number selfRef">6.4. </a><a href="#name-post-quantum-considerations" class="section-name selfRef">Post Quantum Considerations</a>
         </h3>
-<p id="section-6.5-1">Recent achievements in developing quantum computers demonstrate that it is probably feasible to build one that is cryptographically significant. If such a computer is implemented, many of the cryptographic algorithms and protocols currently in use would be insecure. A quantum computer would be able to solve Diffie-Hellman (DH) and Elliptic Curve Diffie-Hellman (ECDH) problems in polynomial time.<a href="#section-6.5-1" class="pilcrow">¶</a></p>
-<p id="section-6.5-2">EDCHOC with pre-shared keys would not be vulnerable to quantum attacks because those keys are used as inputs to the key derivation function. The use of intermediate keys derived through key derivation functions ensure that the message is not immediately compromised if the symmetrically distributed key (PSK) is compromised, or if the algorithm used to distribute keys asymmetrically (DH) is broken. If the pre-shared key has sufficient entropy and the Key Derivation Function (KDF), encryption, and authentication transforms are quantum secure, then the resulting system is believed to be quantum secure.
-Therefore, provided that the PSK remains secret, EDHOC-PSK provides confidentiality, mutual authentication and Perfect Forward Secrecy (PFS) even in the presence of quantum attacks. What is more, the key exchange is still a key agreement where both parties contribute with randomness.<a href="#section-6.5-2" class="pilcrow">¶</a></p>
+<p id="section-6.4-1">Recent achievements in developing quantum computers demonstrate that it is probably feasible to build one that is cryptographically significant. If such a computer is implemented, many of the cryptographic algorithms and protocols currently in use would be insecure. A quantum computer would be able to solve Diffie-Hellman (DH) and Elliptic Curve Diffie-Hellman (ECDH) problems in polynomial time.<a href="#section-6.4-1" class="pilcrow">¶</a></p>
+<p id="section-6.4-2">EDCHOC with pre-shared keys would not be vulnerable to quantum attacks because those keys are used as inputs to the key derivation function. The use of intermediate keys derived through key derivation functions ensure that the message is not immediately compromised if the symmetrically distributed key (PSK) is compromised, or if the algorithm used to distribute keys asymmetrically (DH) is broken. If the pre-shared key has sufficient entropy and the Key Derivation Function (KDF), encryption, and authentication transforms are quantum secure, then the resulting system is believed to be quantum secure.
+Therefore, provided that the PSK remains secret, EDHOC-PSK provides confidentiality, mutual authentication and Perfect Forward Secrecy (PFS) even in the presence of quantum attacks. What is more, the key exchange is still a key agreement where both parties contribute with randomness.<a href="#section-6.4-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="independence-of-session-keys">
-<section id="section-6.6">
+<section id="section-6.5">
         <h3 id="name-independence-of-session-key">
-<a href="#section-6.6" class="section-number selfRef">6.6. </a><a href="#name-independence-of-session-key" class="section-name selfRef">Independence of Session Keys</a>
+<a href="#section-6.5" class="section-number selfRef">6.5. </a><a href="#name-independence-of-session-key" class="section-name selfRef">Independence of Session Keys</a>
         </h3>
-<p id="section-6.6-1">NIST mandates that that an ephemeral private key shall be used in exactly one key-establishment transaction (see Section 5.6.3.3 of <span>[<a href="#SP-800-56A" class="cite xref">SP-800-56A</a>]</span>). This requirement is essential for preserving session key independence and ensuring forward secrecy. The EDHOC protocol complies with this NIST requirement.<a href="#section-6.6-1" class="pilcrow">¶</a></p>
-<p id="section-6.6-2">In other protocols, the reuse of ephemeral keys, particularly when combined with implementation flaws such as the absence of public key validation, has resulted in critical security vulnerabilities. Such weaknesses have allowed attackers to recover the so called “ephemeral” private key from a compromised session, thereby enabling them to compromise the security of both past and future sessions between legitimate parties. Assuming breach and minimizing the impact of compromise are fundamental zero-trust principles.<a href="#section-6.6-2" class="pilcrow">¶</a></p>
+<p id="section-6.5-1">NIST mandates that that an ephemeral private key shall be used in exactly one key-establishment transaction (see Section 5.6.3.3 of <span>[<a href="#SP-800-56A" class="cite xref">SP-800-56A</a>]</span>). This requirement is essential for preserving session key independence and ensuring forward secrecy. The EDHOC protocol complies with this NIST requirement.<a href="#section-6.5-1" class="pilcrow">¶</a></p>
+<p id="section-6.5-2">In other protocols, the reuse of ephemeral keys, particularly when combined with implementation flaws such as the absence of public key validation, has resulted in critical security vulnerabilities. Such weaknesses have allowed attackers to recover the so called “ephemeral” private key from a compromised session, thereby enabling them to compromise the security of both past and future sessions between legitimate parties. Assuming breach and minimizing the impact of compromise are fundamental zero-trust principles.<a href="#section-6.5-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="unified-approach-and-recommendations">
-<section id="section-6.7">
+<section id="section-6.6">
         <h3 id="name-unified-approach-and-recomm">
-<a href="#section-6.7" class="section-number selfRef">6.7. </a><a href="#name-unified-approach-and-recomm" class="section-name selfRef">Unified Approach and Recommendations</a>
+<a href="#section-6.6" class="section-number selfRef">6.6. </a><a href="#name-unified-approach-and-recomm" class="section-name selfRef">Unified Approach and Recommendations</a>
         </h3>
-<p id="section-6.7-1">For use cases involving the transmission of application data, application data can be sent concurrently with message_3, maintaining the protocol's efficiency.
+<p id="section-6.6-1">For use cases involving the transmission of application data, application data can be sent concurrently with message_3, maintaining the protocol's efficiency.
 In applications such as EAP-EDHOC, where application data is not sent, message_4 is mandatory. Thus, EDHOC-PSK authentication method does not include any extra messages.
 Other implementations may continue using OSCORE in place of EDHOC message_4, with a required change in the protocol's language to:
-      The Initiator <span class="bcp14">SHALL NOT</span> persistently store PRK_out or application keys until the Initiator has verified message_4 or a message protected with a derived application key, such as an OSCORE message.<a href="#section-6.7-1" class="pilcrow">¶</a></p>
-<p id="section-6.7-2">This change ensures that key materials are only stored once their integrity and authenticity are confirmed, thereby enhancing privacy by preventing early storage of potentially compromised keys.<a href="#section-6.7-2" class="pilcrow">¶</a></p>
-<p id="section-6.7-3">Lastly, whether the Initiator or Responder authenticates first is not relevant when using symmetric keys.
-This consideration was important for the privacy properties when using asymmetric authentication but is not significant in the context of symmetric key usage.<a href="#section-6.7-3" class="pilcrow">¶</a></p>
+      The Initiator <span class="bcp14">SHALL NOT</span> persistently store PRK_out or application keys until the Initiator has verified message_4 or a message protected with a derived application key, such as an OSCORE message.<a href="#section-6.6-1" class="pilcrow">¶</a></p>
+<p id="section-6.6-2">This change ensures that key materials are only stored once their integrity and authenticity are confirmed, thereby enhancing privacy by preventing early storage of potentially compromised keys.<a href="#section-6.6-2" class="pilcrow">¶</a></p>
+<p id="section-6.6-3">Lastly, whether the Initiator or Responder authenticates first is not relevant when using symmetric keys.
+This consideration was important for the privacy properties when using asymmetric authentication but is not significant in the context of symmetric key usage.<a href="#section-6.6-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="psk-usage-for-session-resumtpion">
+<section id="section-7">
+      <h2 id="name-psk-usage-for-session-resum">
+<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-psk-usage-for-session-resum" class="section-name selfRef">PSK usage for Session Resumtpion</a>
+      </h2>
+<p id="section-7-1">This section defines how PSKs are used for session resumption in EDHOC.
+Each time EDHOC-PSK is run a new PRK_out and PRK_exporter will be generated.
+Following <a href="https://www.rfc-editor.org/rfc/rfc9528.html#section-4.2">Section 4.2 of RFC9528</a>, EDHOC_Exporter can be used to derive both CRED_PSK and ID_CRED_PSK:<a href="#section-7-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-7-2">
+<pre>
+CRED_PSK = EDHOC_Exporter( 2, h'', resumption_psk_length )
+ID_CRED_PSK = EDHOC_Exporter( 3, h'', id_cred_psk_length )
+</pre><a href="#section-7-2" class="pilcrow">¶</a>
+</div>
+<div id="ciphersuite-requirements-for-resumption">
+<section id="section-7.1">
+        <h3 id="name-ciphersuite-requirements-fo">
+<a href="#section-7.1" class="section-number selfRef">7.1. </a><a href="#name-ciphersuite-requirements-fo" class="section-name selfRef">Ciphersuite Requirements for Resumption</a>
+        </h3>
+<p id="section-7.1-1">When using a resumption PSK derived from a previous EDHOC exchange:<a href="#section-7.1-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-7.1-2">
+<li id="section-7.1-2.1">
+            <p id="section-7.1-2.1.1">The resumption PSK <span class="bcp14">MUST</span> only be used with the same ciphersuite that was used in the original EDHOC exchange, or with a ciphersuite that provides equal or higher security guarantees.<a href="#section-7.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-7.1-2.2">
+            <p id="section-7.1-2.2.1">Implmentations <span class="bcp14">SHOULD</span> manitain a mapping between the resumption PSK and its originating ciphersuite to enforce this requirement.<a href="#section-7.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-7.1-2.3">
+            <p id="section-7.1-2.3.1">If a resumption PSK is offered with a weaker ciphersuite than its original exchange, the recipient <span class="bcp14">MUST</span> reject the connection attempt.<a href="#section-7.1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+</section>
+</div>
+<div id="privacy-considerations-for-resumption">
+<section id="section-7.2">
+        <h3 id="name-privacy-considerations-for-">
+<a href="#section-7.2" class="section-number selfRef">7.2. </a><a href="#name-privacy-considerations-for-" class="section-name selfRef">Privacy Considerations for Resumption</a>
+        </h3>
+<p id="section-7.2-1">When using resumption PSKs:<a href="#section-7.2-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-7.2-2.1">
+            <p id="section-7.2-2.1.1">The same ID_CRED_PSK is reused each time EDHOC is executed with a specific resumption PSK.<a href="#section-7.2-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-7.2-2.2">
+            <p id="section-7.2-2.2.1">To prevent long-term tracking, implementations <span class="bcp14">SHOULD</span> periodically initiate a full EDHOC exchange to generate a new resumption PSK and corresponding ID_CRED_PSK. Alternatively, as stated in <a href="https://www.rfc-editor.org/rfc/rfc9528.html#appendix-h">Appendix H of RFC9528</a>, EDHOC_KeyUpdate can be used to derive a new PRK_out, and consequently a new CRED_PSK and ID_CRED_PSK for session resumption.<a href="#section-7.2-2.2.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-7.2-3">While PSK reuse enhances efficiency by reducing the overhead of key exchanges, it presents privacy risks if not managed properly through periodic renewal.<a href="#section-7.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="security-considerations-for-resumption">
+<section id="section-7.3">
+        <h3 id="name-security-considerations-for">
+<a href="#section-7.3" class="section-number selfRef">7.3. </a><a href="#name-security-considerations-for" class="section-name selfRef">Security Considerations for Resumption</a>
+        </h3>
+<ul class="normal">
+<li class="normal" id="section-7.3-1.1">
+            <p id="section-7.3-1.1.1">Resumption PSKs <span class="bcp14">MUST NOT</span> be used for purposes other than EDHOC session resumption.<a href="#section-7.3-1.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-7.3-1.2">
+            <p id="section-7.3-1.2.1">Resumption PSKs <span class="bcp14">MUST</span> be securely stored with the same level of protection as the original session keys.<a href="#section-7.3-1.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-7.3-1.3">
+            <p id="section-7.3-1.3.1">Parties <span class="bcp14">SHOULD</span> implement mechanisms to detect and prevent excessive reuse of the same resumption PSK.<a href="#section-7.3-1.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
 </section>
 </div>
 </section>
 </div>
 <div id="iana-considerations">
-<section id="section-7">
+<section id="section-8">
       <h2 id="name-iana-considerations">
-<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
       </h2>
-<p id="section-7-1">This document has IANA actions.<a href="#section-7-1" class="pilcrow">¶</a></p>
+<p id="section-8-1">This document has IANA actions.<a href="#section-8-1" class="pilcrow">¶</a></p>
 <div id="edhoc-method-type-registry">
-<section id="section-7.1">
+<section id="section-8.1">
         <h3 id="name-edhoc-method-type-registry">
-<a href="#section-7.1" class="section-number selfRef">7.1. </a><a href="#name-edhoc-method-type-registry" class="section-name selfRef">EDHOC Method Type Registry</a>
+<a href="#section-8.1" class="section-number selfRef">8.1. </a><a href="#name-edhoc-method-type-registry" class="section-name selfRef">EDHOC Method Type Registry</a>
         </h3>
-<p id="section-7.1-1">IANA is requested to register the following entry in the "EDHOC Method Type" registry under the group name "Ephemeral Diffie-Hellman Over OCSE (EDHOC)".<a href="#section-7.1-1" class="pilcrow">¶</a></p>
+<p id="section-8.1-1">IANA is requested to register the following entry in the "EDHOC Method Type" registry under the group name "Ephemeral Diffie-Hellman Over OCSE (EDHOC)".<a href="#section-8.1-1" class="pilcrow">¶</a></p>
 <span id="name-addition-to-the-edhoc-metho"></span><div id="fig-method-psk">
 <figure id="figure-3">
-          <div id="section-7.1-2.1">
-            <div class="alignLeft art-svg artwork" id="section-7.1-2.1.1">
+          <div id="section-8.1-2.1">
+            <div class="alignLeft art-svg artwork" id="section-8.1-2.1.1">
 <svg xmlns="http://www.w3.org/2000/svg" version="1.1" height="128" width="800" viewBox="0 0 800 128" class="diagram" text-anchor="middle" font-family="monospace" font-size="13px" stroke-linecap="round">
                 <path d="M 8,32 L 8,96" fill="none" stroke="black"></path>
                 <path d="M 112,32 L 112,96" fill="none" stroke="black"></path>
@@ -1786,7 +1786,7 @@ This consideration was important for the privacy properties when using asymmetri
                   <text x="264" y="84">PSK</text>
                   <text x="512" y="84">PSK</text>
                 </g>
-              </svg><a href="#section-7.1-2.1.1" class="pilcrow">¶</a>
+              </svg><a href="#section-8.1-2.1.1" class="pilcrow">¶</a>
 </div>
 </div>
 <figcaption><a href="#figure-3" class="selfRef">Figure 3</a>:
@@ -1796,30 +1796,42 @@ This consideration was important for the privacy properties when using asymmetri
 </section>
 </div>
 <div id="edhoc-exporter-label-registry">
-<section id="section-7.2">
+<section id="section-8.2">
         <h3 id="name-edhoc-exporter-label-regist">
-<a href="#section-7.2" class="section-number selfRef">7.2. </a><a href="#name-edhoc-exporter-label-regist" class="section-name selfRef">EDHOC Exporter Label Registry</a>
+<a href="#section-8.2" class="section-number selfRef">8.2. </a><a href="#name-edhoc-exporter-label-regist" class="section-name selfRef">EDHOC Exporter Label Registry</a>
         </h3>
-<p id="section-7.2-1">IANA is requested to register the following entry in the "EDHOC Exporter Label" registry under the group name "Ephemeral Diffie-Hellman Over OCSE (EDHOC)".<a href="#section-7.2-1" class="pilcrow">¶</a></p>
+<p id="section-8.2-1">IANA is requested to register the following entry in the "EDHOC Exporter Label" registry under the group name "Ephemeral Diffie-Hellman Over OCSE (EDHOC)".<a href="#section-8.2-1" class="pilcrow">¶</a></p>
 <span id="name-addition-to-the-edhoc-expor"></span><div id="fig-exporter-psk">
 <figure id="figure-4">
-          <div id="section-7.2-2.1">
-            <div class="alignLeft art-svg artwork" id="section-7.2-2.1.1">
-<svg xmlns="http://www.w3.org/2000/svg" version="1.1" height="128" width="528" viewBox="0 0 528 128" class="diagram" text-anchor="middle" font-family="monospace" font-size="13px" stroke-linecap="round">
-                <path d="M 8,32 L 8,96" fill="none" stroke="black"></path>
-                <path d="M 112,32 L 112,96" fill="none" stroke="black"></path>
-                <path d="M 360,32 L 360,96" fill="none" stroke="black"></path>
-                <path d="M 520,32 L 520,96" fill="none" stroke="black"></path>
-                <path d="M 8,32 L 520,32" fill="none" stroke="black"></path>
-                <path d="M 8,62 L 520,62" fill="none" stroke="black"></path>
-                <path d="M 8,66 L 520,66" fill="none" stroke="black"></path>
-                <path d="M 8,96 L 520,96" fill="none" stroke="black"></path>
+          <div id="section-8.2-2.1">
+            <div class="alignLeft art-svg artwork" id="section-8.2-2.1.1">
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" height="160" width="688" viewBox="0 0 688 160" class="diagram" text-anchor="middle" font-family="monospace" font-size="13px" stroke-linecap="round">
+                <path d="M 8,32 L 8,128" fill="none" stroke="black"></path>
+                <path d="M 112,32 L 112,128" fill="none" stroke="black"></path>
+                <path d="M 360,32 L 360,128" fill="none" stroke="black"></path>
+                <path d="M 520,32 L 520,128" fill="none" stroke="black"></path>
+                <path d="M 680,32 L 680,128" fill="none" stroke="black"></path>
+                <path d="M 8,32 L 680,32" fill="none" stroke="black"></path>
+                <path d="M 8,62 L 680,62" fill="none" stroke="black"></path>
+                <path d="M 8,66 L 680,66" fill="none" stroke="black"></path>
+                <path d="M 8,96 L 680,96" fill="none" stroke="black"></path>
+                <path d="M 8,128 L 680,128" fill="none" stroke="black"></path>
                 <g class="text">
                   <text x="40" y="52">Label</text>
                   <text x="168" y="52">Descritpion</text>
-                  <text x="416" y="52">Reference</text>
+                  <text x="396" y="52">Change</text>
+                  <text x="468" y="52">Controller</text>
+                  <text x="568" y="52">Reference</text>
+                  <text x="32" y="84">2</text>
+                  <text x="164" y="84">Resumption</text>
+                  <text x="244" y="84">CRED_PSK</text>
+                  <text x="436" y="84">IETF</text>
+                  <text x="32" y="116">3</text>
+                  <text x="164" y="116">Resumption</text>
+                  <text x="256" y="116">ID_CRED_PSK</text>
+                  <text x="436" y="116">IETF</text>
                 </g>
-              </svg><a href="#section-7.2-2.1.1" class="pilcrow">¶</a>
+              </svg><a href="#section-8.2-2.1.1" class="pilcrow">¶</a>
 </div>
 </div>
 <figcaption><a href="#figure-4" class="selfRef">Figure 4</a>:
@@ -1829,15 +1841,15 @@ This consideration was important for the privacy properties when using asymmetri
 </section>
 </div>
 <div id="edhoc-info-label-registry">
-<section id="section-7.3">
+<section id="section-8.3">
         <h3 id="name-edhoc-info-label-registry">
-<a href="#section-7.3" class="section-number selfRef">7.3. </a><a href="#name-edhoc-info-label-registry" class="section-name selfRef">EDHOC Info Label Registry</a>
+<a href="#section-8.3" class="section-number selfRef">8.3. </a><a href="#name-edhoc-info-label-registry" class="section-name selfRef">EDHOC Info Label Registry</a>
         </h3>
-<p id="section-7.3-1">IANA is requested to register the following registry "EDHOC Info Label" under the group name "Ephemeral Diffie-Hellman Over OCSE (EDHOC)".<a href="#section-7.3-1" class="pilcrow">¶</a></p>
+<p id="section-8.3-1">IANA is requested to register the following registry "EDHOC Info Label" under the group name "Ephemeral Diffie-Hellman Over OCSE (EDHOC)".<a href="#section-8.3-1" class="pilcrow">¶</a></p>
 <span id="name-edhoc-info-label-registry-2"></span><div id="fig-info-label-psk">
 <figure id="figure-5">
-          <div id="section-7.3-2.1">
-            <div class="alignLeft art-svg artwork" id="section-7.3-2.1.1">
+          <div id="section-8.3-2.1">
+            <div class="alignLeft art-svg artwork" id="section-8.3-2.1.1">
 <svg xmlns="http://www.w3.org/2000/svg" version="1.1" height="192" width="472" viewBox="0 0 472 192" class="diagram" text-anchor="middle" font-family="monospace" font-size="13px" stroke-linecap="round">
                 <path d="M 8,32 L 8,160" fill="none" stroke="black"></path>
                 <path d="M 112,32 L 112,160" fill="none" stroke="black"></path>
@@ -1853,17 +1865,17 @@ This consideration was important for the privacy properties when using asymmetri
                   <text x="40" y="52">Label</text>
                   <text x="208" y="52">Key</text>
                   <text x="360" y="52">Reference</text>
-                  <text x="36" y="84">10</text>
+                  <text x="36" y="84">12</text>
                   <text x="216" y="84">KEYSTREAM_3</text>
                   <text x="376" y="84">{{key-der}}</text>
-                  <text x="36" y="116">11</text>
+                  <text x="36" y="116">13</text>
                   <text x="216" y="116">K_3</text>
                   <text x="376" y="116">{{key-der}}</text>
-                  <text x="36" y="148">12</text>
+                  <text x="36" y="148">14</text>
                   <text x="212" y="148">IV_3</text>
                   <text x="376" y="148">{{key-der}}</text>
                 </g>
-              </svg><a href="#section-7.3-2.1.1" class="pilcrow">¶</a>
+              </svg><a href="#section-8.3-2.1.1" class="pilcrow">¶</a>
 </div>
 </div>
 <figcaption><a href="#figure-5" class="selfRef">Figure 5</a>:
@@ -1875,9 +1887,9 @@ This consideration was important for the privacy properties when using asymmetri
 </section>
 </div>
 <div id="sec-normative-references">
-<section id="section-8">
+<section id="section-9">
       <h2 id="name-normative-references">
-<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
       </h2>
 <dl class="references">
 <dt id="RFC2119">[RFC2119]</dt>
