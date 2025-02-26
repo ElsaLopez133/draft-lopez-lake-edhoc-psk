@@ -10,7 +10,7 @@
 <meta content="John Preuß Mattsson" name="author">
 <meta content="Rafael Marin-Lopez" name="author">
 <meta content="
-       This document specifies a Pre-Shared Key (PSK) authentication method for the Ephemeral Diffie-Hellman Over COSE (EDHOC) key exchange protocol. The PSK method enhances computational efficiency while providing mutual authentication, ephemeral key exchange, identity protection, and quantum resistance. It is particularly suited for systems where nodes share a PSK out-of-band and enables efficient session resumption with less computational overhead. This document details the PSK method flow, key derivation changes, message formatting, processing, and security considerations. 
+       This document specifies a Pre-Shared Key (PSK) authentication method for the Ephemeral Diffie-Hellman Over COSE (EDHOC) key exchange protocol. The PSK method enhances computational efficiency while providing mutual authentication, ephemeral key exchange, identity protection, and quantum resistance. It is particularly suited for systems where nodes share a PSK provided out-of-band (external PSK) and enables efficient session resumption with less computational overhead when the PSK is provided from a previous EDHOC session (resumption PSK). This document details the PSK method flow, key derivation changes, message formatting, processing, and security considerations. 
     " name="description">
 <meta content="xml2rfc 3.27.0" name="generator">
 <meta content="draft-ietf-lake-edhoc-psk-latest" name="ietf.draft">
@@ -1050,7 +1050,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 </tr></thead>
 <tfoot><tr>
 <td class="left">Lopez-Perez, et al.</td>
-<td class="center">Expires 28 August 2025</td>
+<td class="center">Expires 30 August 2025</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1063,12 +1063,12 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-ietf-lake-edhoc-psk-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2025-02-24" class="published">24 February 2025</time>
+<time datetime="2025-02-26" class="published">26 February 2025</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2025-08-28">28 August 2025</time></dd>
+<dd class="expires"><time datetime="2025-08-30">30 August 2025</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -1093,7 +1093,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <h1 id="title">EDHOC Authenticated with Pre-Shred Keys (PSK)</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
-<p id="section-abstract-1">This document specifies a Pre-Shared Key (PSK) authentication method for the Ephemeral Diffie-Hellman Over COSE (EDHOC) key exchange protocol. The PSK method enhances computational efficiency while providing mutual authentication, ephemeral key exchange, identity protection, and quantum resistance. It is particularly suited for systems where nodes share a PSK out-of-band and enables efficient session resumption with less computational overhead. This document details the PSK method flow, key derivation changes, message formatting, processing, and security considerations.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-1">This document specifies a Pre-Shared Key (PSK) authentication method for the Ephemeral Diffie-Hellman Over COSE (EDHOC) key exchange protocol. The PSK method enhances computational efficiency while providing mutual authentication, ephemeral key exchange, identity protection, and quantum resistance. It is particularly suited for systems where nodes share a PSK provided out-of-band (external PSK) and enables efficient session resumption with less computational overhead when the PSK is provided from a previous EDHOC session (resumption PSK). This document details the PSK method flow, key derivation changes, message formatting, processing, and security considerations.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 </section>
 <section class="note rfcEditorRemove" id="section-note.1">
       <h2 id="name-about-this-document">
@@ -1130,7 +1130,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 28 August 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 30 August 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1297,9 +1297,10 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
       </h2>
 <p id="section-1-1">This document defines a Pre-Shared Key (PSK) authentication method for the Ephemeral Diffie-Hellman Over COSE (EDHOC) key exchange protocol <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>. The PSK method balances the complexity of credential distribution with computational efficiency. While symmetrical key distribution is more complex than asymmetrical approaches, PSK authentication offers greater computational efficiency compared to the methods outlined in <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>. The PSK method retains mutual authentication, asymmetric ephemeral key exchange, and identity protection established by <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>.<a href="#section-1-1" class="pilcrow">¶</a></p>
-<p id="section-1-2">EDHOC with PSK authentication benefits systems where two nodes nodes share a Pre-Shared Key (PSK) provided out-of-band. This applies to scenarios like the Authenticated Key Management Architecture (AKMA) in mobile systems or the Peer and Authenticator in Extensible Authentication Protocol (EAP) systems. The PSK method enables the nodes to perform ephemeral key exchange, achieving Perfect Forward Secrecy (PFS). This ensures that even if the PSK is compromised, past communications remain secure against active attackers, while future communications are protected from passive attackers. Additionally, by leveraging the PSK for both authentication and key derivation, the method offers quantum resistance key exchange and authentication.<a href="#section-1-2" class="pilcrow">¶</a></p>
-<p id="section-1-3">Another key use case of PSK authentication in the EDHOC protocol is session resumption. This enables previously connected parties to quickly reestablish secure communication using pre-shared keys from a prior session, reducing the overhead associated with key exchange and asymmetric authentication. By using PSK authentication, EDHOC allows session keys to be refreshed with significantly lower computational overhead compared to public-key authentication.<a href="#section-1-3" class="pilcrow">¶</a></p>
-<p id="section-1-4">Section 3 provides an overview of the PSK method flow and credentials. Section 4 outlines the changes to key derivation compared to <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>, Section 5 details message formatting and processing, and Section 6 discusses security considerations. How to derive keys for resumption is described in Section 7.<a href="#section-1-4" class="pilcrow">¶</a></p>
+<p id="section-1-2">EDHOC with PSK authentication benefits systems where two nodes nodes share a Pre-Shared Key (PSK) provided out-of-band (external PSK). This applies to scenarios like the Authenticated Key Management Architecture (AKMA) in mobile systems or the Peer and Authenticator in Extensible Authentication Protocol (EAP) systems. The PSK method enables the nodes to perform ephemeral key exchange, achieving Perfect Forward Secrecy (PFS). This ensures that even if the PSK is compromised, past communications remain secure against active attackers, while future communications are protected from passive attackers. Additionally, by leveraging the PSK for both authentication and key derivation, the method offers quantum resistance key exchange and authentication.<a href="#section-1-2" class="pilcrow">¶</a></p>
+<p id="section-1-3">Another key use case of PSK authentication in the EDHOC protocol is session resumption. This enables previously connected parties to quickly reestablish secure communication using pre-shared keys from a prior session, reducing the overhead associated with key exchange and asymmetric authentication. By using PSK authentication, EDHOC allows session keys to be refreshed with significantly lower computational overhead compared to public-key authentication. In this case, the PSK is provisioned after the establishment of a previous EDHOC session by using EDHOC_Exporter (resumption PSK).<a href="#section-1-3" class="pilcrow">¶</a></p>
+<p id="section-1-4">Therefore, the external PSK is supposed to be a long-term credential while the resumption PSK is a session key.<a href="#section-1-4" class="pilcrow">¶</a></p>
+<p id="section-1-5">Section 3 provides an overview of the PSK method flow and credentials. Section 4 outlines the changes to key derivation compared to <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>, Section 5 details message formatting and processing, and Section 6 discusses security considerations. How to derive keys for resumption is described in Section 7.<a href="#section-1-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="conventions-and-definitions">
@@ -1325,7 +1326,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-credentials">
 <a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-credentials" class="section-name selfRef">Credentials</a>
         </h3>
-<p id="section-3.1-1">Initiator and Responder are assumed to have a PSK with good amount of randomness and the requirements that:<a href="#section-3.1-1" class="pilcrow">¶</a></p>
+<p id="section-3.1-1">Initiator and Responder are assumed to have a PSK (external PSK or resumption PSK) with good amount of randomness and the requirements that:<a href="#section-3.1-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-3.1-2.1">
             <p id="section-3.1-2.1.1">Only the Initiator and the Responder have access to the PSK.<a href="#section-3.1-2.1.1" class="pilcrow">¶</a></p>
@@ -1467,7 +1468,7 @@ IV_3        = EDHOC_KDF( PRK_4e3m, 13, TH_3, iv_length )
           <p id="section-4-7.1.1">KEYSTREAM_3 is used to encrypt the ID_CRED_PSK in message_3.<a href="#section-4-7.1.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-4-7.2">
-          <p id="section-4-7.2.1">TH_3 = H( TH_2, PLAINTEXT_2, CRED_PSK )<a href="#section-4-7.2.1" class="pilcrow">¶</a></p>
+          <p id="section-4-7.2.1">TH_3 = H( TH_2, PLAINTEXT_2 )<a href="#section-4-7.2.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 <p id="section-4-8">Additionally, the definition of the transcript hash TH_4 is modified as:<a href="#section-4-8" class="pilcrow">¶</a></p>
@@ -1560,6 +1561,9 @@ IV_3        = EDHOC_KDF( PRK_4e3m, 13, TH_3, iv_length )
 <li class="normal" id="section-5.3.2-1.1.2.1.2.1">
                       <p id="section-5.3.2-1.1.2.1.2.1.1">If ID_CRED_PSK contains a single 'kid' parameter, i.e., ID_CRED_PSK = { 4 : kid_PSK }, then the compact encoding is applied, see <span><a href="https://rfc-editor.org/rfc/rfc9528#section-3.5.3.2" class="relref">Section 3.5.3.2</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>.<a href="#section-5.3.2-1.1.2.1.2.1.1" class="pilcrow">¶</a></p>
 </li>
+                    <li class="normal" id="section-5.3.2-1.1.2.1.2.2">
+                      <p id="section-5.3.2-1.1.2.1.2.2.1">If the length of PLAINTEXT_3A exceeds the output of EDHOC_KDF, then <span><a href="https://rfc-editor.org/rfc/rfc9528#appendix-G" class="relref">Appendix G</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span> applies.<a href="#section-5.3.2-1.1.2.1.2.2.1" class="pilcrow">¶</a></p>
+</li>
                   </ul>
 </li>
                 <li class="normal" id="section-5.3.2-1.1.2.2">
@@ -1577,7 +1581,7 @@ IV_3        = EDHOC_KDF( PRK_4e3m, 13, TH_3, iv_length )
                   <p id="section-5.3.2-1.2.2.1.1">protected = h''<a href="#section-5.3.2-1.2.2.1.1" class="pilcrow">¶</a></p>
 </li>
                 <li class="normal" id="section-5.3.2-1.2.2.2">
-                  <p id="section-5.3.2-1.2.2.2.1">external_aad = &lt;&lt; ID_CRED_PSK, TH_3 &gt;&gt;<a href="#section-5.3.2-1.2.2.2.1" class="pilcrow">¶</a></p>
+                  <p id="section-5.3.2-1.2.2.2.1">external_aad = &lt;&lt; ID_CRED_PSK, TH_3, CRED_PSK &gt;&gt;<a href="#section-5.3.2-1.2.2.2.1" class="pilcrow">¶</a></p>
 </li>
                 <li class="normal" id="section-5.3.2-1.2.2.3">
                   <p id="section-5.3.2-1.2.2.3.1">K_3 and IV_3 as defined in <a href="#key-der" class="auto internal xref">Section 4</a><a href="#section-5.3.2-1.2.2.3.1" class="pilcrow">¶</a></p>
@@ -1623,7 +1627,7 @@ IV_3        = EDHOC_KDF( PRK_4e3m, 13, TH_3, iv_length )
         <h3 id="name-identity-protection">
 <a href="#section-6.1" class="section-number selfRef">6.1. </a><a href="#name-identity-protection" class="section-name selfRef">Identity protection</a>
         </h3>
-<p id="section-6.1-1">EDHOC-PSK encrypts ID_CRED_PSK in message 3, XOR encrypted with a keystream derived from the ephemeral shared secret G_XY. As a consequence, contrary to the current EDHOC methods that protect the Initiator’s identity against active attackers and the Responder’s identity against passive attackers (See <a href="https://www.rfc-editor.org/rfc/rfc9528.html#section-9.1">Section 9.1 of RFC9528</a>), EDHOC-PSK provides identity protection for both the Initator and the Responder against passive attackers.<a href="#section-6.1-1" class="pilcrow">¶</a></p>
+<p id="section-6.1-1">EDHOC-PSK encrypts ID_CRED_PSK in message 3, XOR encrypted with a keystream derived from the ephemeral shared secret G_XY. As a consequence, contrary to the current EDHOC methods that protect the Initiator’s identity against active attackers and the Responder’s identity against passive attackers (See <span><a href="https://rfc-editor.org/rfc/rfc9528#section-9.1" class="relref">Section 9.1</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>), EDHOC-PSK provides identity protection for both the Initator and the Responder against passive attackers.<a href="#section-6.1-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="mutual-authentication">
@@ -1677,14 +1681,14 @@ This consideration was important for the privacy properties when using asymmetri
 </div>
 </section>
 </div>
-<div id="psk-usage-for-session-resumtpion">
+<div id="psk-resumption">
 <section id="section-7">
       <h2 id="name-psk-usage-for-session-resum">
 <a href="#section-7" class="section-number selfRef">7. </a><a href="#name-psk-usage-for-session-resum" class="section-name selfRef">PSK usage for Session Resumtpion</a>
       </h2>
 <p id="section-7-1">This section defines how PSKs are used for session resumption in EDHOC.
 Each time EDHOC-PSK is run a new PRK_out and PRK_exporter will be generated.
-Following <a href="https://www.rfc-editor.org/rfc/rfc9528.html#section-4.2">Section 4.2 of RFC9528</a>, EDHOC_Exporter can be used to derive both CRED_PSK and ID_CRED_PSK:<a href="#section-7-1" class="pilcrow">¶</a></p>
+Following <span><a href="https://rfc-editor.org/rfc/rfc9528#section-4.2" class="relref">Section 4.2</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>, EDHOC_Exporter can be used to derive both CRED_PSK and ID_CRED_PSK:<a href="#section-7-1" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-7-2">
 <pre>
 CRED_PSK = EDHOC_Exporter( 2, h'', resumption_psk_length )
@@ -1721,7 +1725,7 @@ ID_CRED_PSK = EDHOC_Exporter( 3, h'', id_cred_psk_length )
             <p id="section-7.2-2.1.1">The same ID_CRED_PSK is reused each time EDHOC is executed with a specific resumption PSK.<a href="#section-7.2-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-7.2-2.2">
-            <p id="section-7.2-2.2.1">To prevent long-term tracking, implementations <span class="bcp14">SHOULD</span> periodically initiate a full EDHOC exchange to generate a new resumption PSK and corresponding ID_CRED_PSK. Alternatively, as stated in <a href="https://www.rfc-editor.org/rfc/rfc9528.html#appendix-h">Appendix H of RFC9528</a>, EDHOC_KeyUpdate can be used to derive a new PRK_out, and consequently a new CRED_PSK and ID_CRED_PSK for session resumption.<a href="#section-7.2-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-7.2-2.2.1">To prevent long-term tracking, implementations <span class="bcp14">SHOULD</span> periodically initiate a full EDHOC exchange to generate a new resumption PSK and corresponding ID_CRED_PSK. Alternatively, as stated in <span><a href="https://rfc-editor.org/rfc/rfc9528#appendix-H" class="relref">Appendix H</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>, EDHOC_KeyUpdate can be used to derive a new PRK_out, and consequently a new CRED_PSK and ID_CRED_PSK for session resumption.<a href="#section-7.2-2.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 <p id="section-7.2-3">While PSK reuse enhances efficiency by reducing the overhead of key exchanges, it presents privacy risks if not managed properly through periodic renewal.<a href="#section-7.2-3" class="pilcrow">¶</a></p>
@@ -1826,10 +1830,14 @@ ID_CRED_PSK = EDHOC_Exporter( 3, h'', id_cred_psk_length )
                   <text x="164" y="84">Resumption</text>
                   <text x="244" y="84">CRED_PSK</text>
                   <text x="436" y="84">IETF</text>
+                  <text x="560" y="84">Section</text>
+                  <text x="600" y="84">7</text>
                   <text x="32" y="116">3</text>
                   <text x="164" y="116">Resumption</text>
                   <text x="256" y="116">ID_CRED_PSK</text>
                   <text x="436" y="116">IETF</text>
+                  <text x="560" y="116">Section</text>
+                  <text x="600" y="116">7</text>
                 </g>
               </svg><a href="#section-8.2-2.1.1" class="pilcrow">¶</a>
 </div>
@@ -1867,13 +1875,16 @@ ID_CRED_PSK = EDHOC_Exporter( 3, h'', id_cred_psk_length )
                   <text x="360" y="52">Reference</text>
                   <text x="36" y="84">12</text>
                   <text x="216" y="84">KEYSTREAM_3</text>
-                  <text x="376" y="84">{{key-der}}</text>
+                  <text x="360" y="84">Section</text>
+                  <text x="400" y="84">4</text>
                   <text x="36" y="116">13</text>
                   <text x="216" y="116">K_3</text>
-                  <text x="376" y="116">{{key-der}}</text>
+                  <text x="360" y="116">Section</text>
+                  <text x="400" y="116">4</text>
                   <text x="36" y="148">14</text>
                   <text x="212" y="148">IV_3</text>
-                  <text x="376" y="148">{{key-der}}</text>
+                  <text x="360" y="148">Section</text>
+                  <text x="400" y="148">4</text>
                 </g>
               </svg><a href="#section-8.3-2.1.1" class="pilcrow">¶</a>
 </div>
@@ -2069,9 +2080,11 @@ info = (
 <span class="contact-name">Christian Amsüss</span>,
 <span class="contact-name">Scott Fluhrer</span>,
 <span class="contact-name">Charlie Jacomme</span>,
+<span class="contact-name">Marco Tiloca</span>,
 and
-<span class="contact-name">Marco Tiloca</span>
+<span class="contact-name">Francisco Lopez-Gomez</span>
 for reviewing and commenting on intermediate versions of the draft.<a href="#appendix-D-1" class="pilcrow">¶</a></p>
+<p id="appendix-D-2">This work has been partly funded by PID2023-148104OB-C43 funded by MICIU/AEI/10.13039/501100011033 (ONOFRE4), FEDER/UE EU HE CASTOR under Grant Agreement No 101167904 and EU CERTIFY under Grant Agreement No 101069471.<a href="#appendix-D-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="authors-addresses">

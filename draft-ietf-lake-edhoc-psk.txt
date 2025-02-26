@@ -5,11 +5,11 @@
 LAKE Working Group                                        E. Lopez-Perez
 Internet-Draft                                                     Inria
 Intended status: Standards Track                             G. Selander
-Expires: 28 August 2025                                J. Preuß Mattsson
+Expires: 30 August 2025                                J. Preuß Mattsson
                                                                 Ericsson
                                                           R. Marin-Lopez
                                                     University of Murcia
-                                                        24 February 2025
+                                                        26 February 2025
 
 
              EDHOC Authenticated with Pre-Shred Keys (PSK)
@@ -22,10 +22,12 @@ Abstract
    protocol.  The PSK method enhances computational efficiency while
    providing mutual authentication, ephemeral key exchange, identity
    protection, and quantum resistance.  It is particularly suited for
-   systems where nodes share a PSK out-of-band and enables efficient
-   session resumption with less computational overhead.  This document
-   details the PSK method flow, key derivation changes, message
-   formatting, processing, and security considerations.
+   systems where nodes share a PSK provided out-of-band (external PSK)
+   and enables efficient session resumption with less computational
+   overhead when the PSK is provided from a previous EDHOC session
+   (resumption PSK).  This document details the PSK method flow, key
+   derivation changes, message formatting, processing, and security
+   considerations.
 
 About This Document
 
@@ -59,7 +61,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 28 August 2025.
+   This Internet-Draft will expire on 30 August 2025.
 
 Copyright Notice
 
@@ -129,17 +131,17 @@ Table of Contents
    exchange, and identity protection established by [RFC9528].
 
    EDHOC with PSK authentication benefits systems where two nodes nodes
-   share a Pre-Shared Key (PSK) provided out-of-band.  This applies to
-   scenarios like the Authenticated Key Management Architecture (AKMA)
-   in mobile systems or the Peer and Authenticator in Extensible
-   Authentication Protocol (EAP) systems.  The PSK method enables the
-   nodes to perform ephemeral key exchange, achieving Perfect Forward
-   Secrecy (PFS).  This ensures that even if the PSK is compromised,
-   past communications remain secure against active attackers, while
-   future communications are protected from passive attackers.
-   Additionally, by leveraging the PSK for both authentication and key
-   derivation, the method offers quantum resistance key exchange and
-   authentication.
+   share a Pre-Shared Key (PSK) provided out-of-band (external PSK).
+   This applies to scenarios like the Authenticated Key Management
+   Architecture (AKMA) in mobile systems or the Peer and Authenticator
+   in Extensible Authentication Protocol (EAP) systems.  The PSK method
+   enables the nodes to perform ephemeral key exchange, achieving
+   Perfect Forward Secrecy (PFS).  This ensures that even if the PSK is
+   compromised, past communications remain secure against active
+   attackers, while future communications are protected from passive
+   attackers.  Additionally, by leveraging the PSK for both
+   authentication and key derivation, the method offers quantum
+   resistance key exchange and authentication.
 
    Another key use case of PSK authentication in the EDHOC protocol is
    session resumption.  This enables previously connected parties to
@@ -147,7 +149,12 @@ Table of Contents
    prior session, reducing the overhead associated with key exchange and
    asymmetric authentication.  By using PSK authentication, EDHOC allows
    session keys to be refreshed with significantly lower computational
-   overhead compared to public-key authentication.
+   overhead compared to public-key authentication.  In this case, the
+   PSK is provisioned after the establishment of a previous EDHOC
+   session by using EDHOC_Exporter (resumption PSK).
+
+   Therefore, the external PSK is supposed to be a long-term credential
+   while the resumption PSK is a session key.
 
    Section 3 provides an overview of the PSK method flow and
    credentials.  Section 4 outlines the changes to key derivation
@@ -180,8 +187,9 @@ Table of Contents
 
 3.1.  Credentials
 
-   Initiator and Responder are assumed to have a PSK with good amount of
-   randomness and the requirements that:
+   Initiator and Responder are assumed to have a PSK (external PSK or
+   resumption PSK) with good amount of randomness and the requirements
+   that:
 
    *  Only the Initiator and the Responder have access to the PSK.
 
@@ -278,7 +286,7 @@ Table of Contents
 
    *  KEYSTREAM_3 is used to encrypt the ID_CRED_PSK in message_3.
 
-   *  TH_3 = H( TH_2, PLAINTEXT_2, CRED_PSK )
+   *  TH_3 = H( TH_2, PLAINTEXT_2 )
 
    Additionally, the definition of the transcript hash TH_4 is modified
    as:
@@ -338,6 +346,9 @@ Table of Contents
             ID_CRED_PSK = { 4 : kid_PSK }, then the compact encoding is
             applied, see Section 3.5.3.2 of [RFC9528].
 
+         o  If the length of PLAINTEXT_3A exceeds the output of
+            EDHOC_KDF, then Appendix G of [RFC9528] applies.
+
       -  Compute KEYSTREAM_3 as in Section 4, where plaintext_length is
          the length of PLAINTEXT_3A.  For the case of plaintext_length
          exceeding the EDHOC_KDF output size, see Appendix G of
@@ -355,7 +366,7 @@ Table of Contents
 
       -  protected = h''
 
-      -  external_aad = << ID_CRED_PSK, TH_3 >>
+      -  external_aad = << ID_CRED_PSK, TH_3, CRED_PSK >>
 
       -  K_3 and IV_3 as defined in Section 4
 
@@ -396,10 +407,9 @@ Table of Contents
    keystream derived from the ephemeral shared secret G_XY.  As a
    consequence, contrary to the current EDHOC methods that protect the
    Initiator’s identity against active attackers and the Responder’s
-   identity against passive attackers (See Section 9.1 of RFC9528
-   (https://www.rfc-editor.org/rfc/rfc9528.html#section-9.1)), EDHOC-PSK
-   provides identity protection for both the Initator and the Responder
-   against passive attackers.
+   identity against passive attackers (See Section 9.1 of [RFC9528]),
+   EDHOC-PSK provides identity protection for both the Initator and the
+   Responder against passive attackers.
 
 6.2.  Mutual Authentication
 
@@ -487,8 +497,7 @@ Table of Contents
 
    This section defines how PSKs are used for session resumption in
    EDHOC.  Each time EDHOC-PSK is run a new PRK_out and PRK_exporter
-   will be generated.  Following Section 4.2 of RFC9528
-   (https://www.rfc-editor.org/rfc/rfc9528.html#section-4.2),
+   will be generated.  Following Section 4.2 of [RFC9528],
    EDHOC_Exporter can be used to derive both CRED_PSK and ID_CRED_PSK:
 
    CRED_PSK = EDHOC_Exporter( 2, h'', resumption_psk_length )
@@ -519,8 +528,7 @@ Table of Contents
    *  To prevent long-term tracking, implementations SHOULD periodically
       initiate a full EDHOC exchange to generate a new resumption PSK
       and corresponding ID_CRED_PSK.  Alternatively, as stated in
-      Appendix H of RFC9528 (https://www.rfc-editor.org/rfc/
-      rfc9528.html#appendix-h), EDHOC_KeyUpdate can be used to derive a
+      Appendix H of [RFC9528], EDHOC_KeyUpdate can be used to derive a
       new PRK_out, and consequently a new CRED_PSK and ID_CRED_PSK for
       session resumption.
 
@@ -566,9 +574,9 @@ Table of Contents
 +------------+------------------------------+-------------------+-------------------+
 | Label      | Descritpion                  | Change Controller | Reference         |
 +============+==============================+===================+===================+
-|  2         | Resumption CRED_PSK          |       IETF        |                   |
+|  2         | Resumption CRED_PSK          |       IETF        | Section 7         |
 +------------+------------------------------+-------------------+-------------------+
-|  3         | Resumption ID_CRED_PSK       |       IETF        |                   |
+|  3         | Resumption ID_CRED_PSK       |       IETF        | Section 7         |
 +------------+------------------------------+-------------------+-------------------+
 
        Figure 4: Addition to the EDHOC Exporter Label Registry.
@@ -582,11 +590,11 @@ Table of Contents
    +------------+-----------------------+-------------------+
    | Label      |          Key          |  Reference        |
    +============+=======================+===================+
-   |  12        |       KEYSTREAM_3     |   {{key-der}}     |
+   |  12        |       KEYSTREAM_3     |   Section 4       |
    +------------+-----------------------+-------------------+
-   |  13        |           K_3         |   {{key-der}}     |
+   |  13        |           K_3         |   Section 4       |
    +------------+-----------------------+-------------------+
-   |  14        |          IV_3         |   {{key-der}}     |
+   |  14        |          IV_3         |   Section 4       |
    +------------+-----------------------+-------------------+
 
                     Figure 5: EDHOC Info Label Registry.
@@ -738,8 +746,13 @@ Appendix C.  Change Log
 Acknowledgments
 
    The authors want to thank Christian Amsüss, Scott Fluhrer, Charlie
-   Jacomme, and Marco Tiloca for reviewing and commenting on
-   intermediate versions of the draft.
+   Jacomme, Marco Tiloca, and Francisco Lopez-Gomez for reviewing and
+   commenting on intermediate versions of the draft.
+
+   This work has been partly funded by PID2023-148104OB-C43 funded by
+   MICIU/AEI/10.13039/501100011033 (ONOFRE4), FEDER/UE EU HE CASTOR
+   under Grant Agreement No 101167904 and EU CERTIFY under Grant
+   Agreement No 101069471.
 
 Authors' Addresses
 
