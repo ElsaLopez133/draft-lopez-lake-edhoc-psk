@@ -164,7 +164,7 @@ Table of Contents
 
    Section 3 provides an overview of the PSK method flow and
    credentials.  Section 4 outlines the changes to key derivation
-   compared to [RFC9528], Section 5 details message formatting and
+   compared to [RFC9528].  Section 5 details message formatting and
    processing, and Section 6 discusses security considerations.  How to
    derive keys for resumption is described in Section 7.
 
@@ -216,11 +216,6 @@ Table of Contents
    corresponding CRED_PSK, since ambiguity may require the recipient to
    try multiple keys.
 
-   If ID_CRED_PSK consists of a single 'kid' parameter, the compact
-   encoding defined in Section 3.5.3.2 of [RFC9528], applies.  For
-   example, { 4 : h'0f' } may be compactly encoded in the plaintext as
-   the byte string h'0f'.
-
 3.1.2.  CRED_PSK
 
    CRED_PSK is an authentication credential that identifies and
@@ -236,8 +231,6 @@ Table of Contents
 
    *  Authentication is achieved implicitly via the successful use of
       the PSK to derive keying material and decrypt protected messages.
-
-   *  Signature-based fields such as Signature_or_MAC are not used.
 
    A common representation of CRED_PSK is a CBOR Web Token (CWT) or CWT
    Claims Set (CCS) [RFC8392] whose 'cnf' claim uses the confirmation
