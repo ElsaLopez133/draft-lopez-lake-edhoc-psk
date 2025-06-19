@@ -5,11 +5,11 @@
 LAKE Working Group                                        E. Lopez-Perez
 Internet-Draft                                                     Inria
 Intended status: Standards Track                             G. Selander
-Expires: 30 August 2025                                J. Preuß Mattsson
+Expires: 21 December 2025                              J. Preuß Mattsson
                                                                 Ericsson
                                                           R. Marin-Lopez
                                                     University of Murcia
-                                                        26 February 2025
+                                                            19 June 2025
 
 
              EDHOC Authenticated with Pre-Shred Keys (PSK)
@@ -61,7 +61,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 30 August 2025.
+   This Internet-Draft will expire on 21 December 2025.
 
 Copyright Notice
 
@@ -114,6 +114,10 @@ Table of Contents
    9.  Normative References
    Appendix A.  CDDL Definitions
    Appendix B.  Test Vectors
+     B.1.  message_1
+     B.2.  message_2
+     B.3.  message_3
+     B.4.  message_ 4
    Appendix C.  Change Log
    Acknowledgments
    Authors' Addresses
@@ -130,7 +134,7 @@ Table of Contents
    method retains mutual authentication, asymmetric ephemeral key
    exchange, and identity protection established by [RFC9528].
 
-   EDHOC with PSK authentication benefits systems where two nodes nodes
+   EDHOC with PSK authentication benefits use cases where two nodes
    share a Pre-Shared Key (PSK) provided out-of-band (external PSK).
    This applies to scenarios like the Authenticated Key Management
    Architecture (AKMA) in mobile systems or the Peer and Authenticator
@@ -150,8 +154,8 @@ Table of Contents
    asymmetric authentication.  By using PSK authentication, EDHOC allows
    session keys to be refreshed with significantly lower computational
    overhead compared to public-key authentication.  In this case, the
-   PSK is provisioned after the establishment of a previous EDHOC
-   session by using EDHOC_Exporter (resumption PSK).
+   PSK (resumption PSK) is provisioned after the establishment of a
+   previous EDHOC session by using EDHOC_Exporter (resumption PSK).
 
    Therefore, the external PSK is supposed to be a long-term credential
    while the resumption PSK is a session key.
@@ -179,11 +183,13 @@ Table of Contents
 
 3.  Protocol
 
-   In this method, the Pre-Shared Key identifier (ID_CRED_PSK) is sent
-   in message_3.  The ID_CRED_PSK allows retrieval of CRED_PSK, a
-   COSE_Key compatible authentication credential that contains the PSK.
-   Through this document we will refer to the Pre-Shared Key
-   authentication method as EDHOC-PSK.
+   In this method, the Pre-Shared Key identifier (ID_CRED_PSK), which
+   allows retrieval of the CRED_PSK, is sent in message_3.  CRED_PSK is
+   an authentication credential associated with the PSK.  Although it
+   may use a COSE_Key representation for compatibility, the format is
+   not restricted to COSE_Key and can vary depending on the
+   implementation.  Through this document we will refer to the Pre-
+   Shared Key authentication method as EDHOC-PSK.
 
 3.1.  Credentials
 
@@ -202,10 +208,12 @@ Table of Contents
 
    ID_CRED_PSK = {4 : h'0f' }
 
-   *  CRED_PSK is a COSE_Key compatible authentication credential, i.e.,
-      a CBOR Web Token (CWT) or CWT Claims Set (CCS) [RFC8392] whose
-      'cnf' claim uses the confirmation method 'COSE_Key' encoding the
-      PSK.  For example:
+   *  CRED_PSK is an authentication credential that identifies the PSK.
+      It is often represented as a CBOR Web Token (CWT) or CWT Claims
+      Set (CCS) [RFC8392] whose 'cnf' claim uses the confirmation method
+      'COSE_Key' to carry the PSK.  However, other formats for CRED_PSK
+      are also allowed, as long as they enable the recipient to identify
+      and retrieve the correct PSK.  An example of CRED_PSK would be:
 
    {                                               /CCS/
      2 : "mydotbot",                               /sub/
@@ -277,8 +285,8 @@ Table of Contents
      PRK_3e2m    = PRK_2e
      PRK_4e3m    = EDHOC_Extract( SALT_4e3m, CRED_PSK )
      KEYSTREAM_3 = EDHOC_KDF( PRK_3e2m, 11, TH_3, plaintext_length_3 )
-     K_3         = EDHOC_KDF( PRK_4e3m, 12, TH_3, key_length )
-     IV_3        = EDHOC_KDF( PRK_4e3m, 13, TH_3, iv_length )
+     K_3         = EDHOC_KDF( PRK_4e3m, 3, TH_3, key_length )
+     IV_3        = EDHOC_KDF( PRK_4e3m, 4, TH_3, iv_length )
 
         Figure 2: Key Derivation of EDHOC PSK Authentication Method.
 
@@ -291,7 +299,7 @@ Table of Contents
    Additionally, the definition of the transcript hash TH_4 is modified
    as:
 
-   *  TH_4 = H( TH_3, ID_CRED_PSK, ? EAD_3, CRED_PSK )
+   *  TH_4 = H( TH_3, ID_CRED_PSK, PLAINTEXT_3B, CRED_PSK )
 
 5.  Message Formatting and Processing
 
@@ -350,9 +358,7 @@ Table of Contents
             EDHOC_KDF, then Appendix G of [RFC9528] applies.
 
       -  Compute KEYSTREAM_3 as in Section 4, where plaintext_length is
-         the length of PLAINTEXT_3A.  For the case of plaintext_length
-         exceeding the EDHOC_KDF output size, see Appendix G of
-         [RFC9528].
+         the length of PLAINTEXT_3A.
 
       -  CIPHERTEXT_3 = PLAINTEXT_3A XOR KEYSTREAM_3
 
@@ -415,7 +421,7 @@ Table of Contents
 
    Authentication in EDHOC-PSK depends on the security of the session
    key and the protocol's confidentiality.  Both security properties
-   hold as long as the PSK remains secret.  Even though the foruth
+   hold as long as the PSK remains secret.  Even though the fourth
    message (message_4) remains optional, mutual authentication is not
    guaranteed without it, or without an OSCORE message or any
    application data that confirms that the Responder owns the PSK.  When
@@ -456,11 +462,11 @@ Table of Contents
 
 6.5.  Independence of Session Keys
 
-   NIST mandates that that an ephemeral private key shall be used in
-   exactly one key-establishment transaction (see Section 5.6.3.3 of
+   NIST mandates that an ephemeral private key shall be used in exactly
+   one key-establishment transaction (see Section 5.6.3.3 of
    [SP-800-56A]).  This requirement is essential for preserving session
-   key independence and ensuring forward secrecy.  The EDHOC protocol
-   complies with this NIST requirement.
+   key independence and ensuring forward secrecy.  The EDHOC-PSK
+   protocol complies with this NIST requirement.
 
    In other protocols, the reuse of ephemeral keys, particularly when
    combined with implementation flaws such as the absence of public key
@@ -496,12 +502,35 @@ Table of Contents
 7.  PSK usage for Session Resumtpion
 
    This section defines how PSKs are used for session resumption in
-   EDHOC.  Each time EDHOC-PSK is run a new PRK_out and PRK_exporter
-   will be generated.  Following Section 4.2 of [RFC9528],
-   EDHOC_Exporter can be used to derive both CRED_PSK and ID_CRED_PSK:
+   EDHOC.  Following Section 4.2 of [RFC9528], EDHOC_Exporter can be
+   used to derive both CRED_PSK and ID_CRED_PSK:
 
    CRED_PSK = EDHOC_Exporter( 2, h'', resumption_psk_length )
    ID_CRED_PSK = EDHOC_Exporter( 3, h'', id_cred_psk_length )
+
+   where:
+
+   *  resumption_pks_length is by default, at least, the key_length
+      (length of the encryption key of the EDHOC AEAD algorithm of the
+      selected cipher suite) of the session in which the EDHOC_Exporter
+      is called.
+
+   *  id_cred_psk_length is by default 2.
+
+   A peer that has successfully completed an EDHOC session, regardless
+   of the used authentication method, MUST generate a resumption key to
+   use for the next resumption in the present "session series", as long
+   as it supports PSK resumption.  To guarantee that both peers share
+   the same resumption key, when a session is run using rPSK_i as a
+   resumption key - The Initiator can delete rPSK_i after having
+   successfully verified EDHOC message_4.  In this case, the Responder
+   will have derived the next rPSK_(i+1), which the Initiator can know
+   for sure, upon receiving EDHOC message_4.  - The Responder can delete
+   rPSK_(i-1), if any, after having successfully sent EDHOC message_4.
+   That is, upon receiving EDHOC message_3, the Responder knows for sure
+   that the other peer did derive rPSK_i at the end of the previous
+   session in the "session series", thus making it safe to delete the
+   previous resumption key rPSK_(i-1).
 
 7.1.  Ciphersuite Requirements for Resumption
 
@@ -511,12 +540,13 @@ Table of Contents
        that was used in the original EDHOC exchange, or with a
        ciphersuite that provides equal or higher security guarantees.
 
-   2.  Implmentations SHOULD manitain a mapping between the resumption
+   2.  Implementations SHOULD manitain a mapping between the resumption
        PSK and its originating ciphersuite to enforce this requirement.
 
-   3.  If a resumption PSK is offered with a weaker ciphersuite than its
-       original exchange, the recipient MUST reject the connection
-       attempt.
+   3.  If a resumption PSK is offered with a ciphersuite different from
+       the one used in the original EDHOC session, the recipient can
+       fail the present EDHOC session according to application-specific
+       policies.
 
 7.2.  Privacy Considerations for Resumption
 
@@ -531,10 +561,6 @@ Table of Contents
       Appendix H of [RFC9528], EDHOC_KeyUpdate can be used to derive a
       new PRK_out, and consequently a new CRED_PSK and ID_CRED_PSK for
       session resumption.
-
-   While PSK reuse enhances efficiency by reducing the overhead of key
-   exchanges, it presents privacy risks if not managed properly through
-   periodic renewal.
 
 7.3.  Security Considerations for Resumption
 
@@ -590,11 +616,7 @@ Table of Contents
    +------------+-----------------------+-------------------+
    | Label      |          Key          |  Reference        |
    +============+=======================+===================+
-   |  12        |       KEYSTREAM_3     |   Section 4       |
-   +------------+-----------------------+-------------------+
-   |  13        |           K_3         |   Section 4       |
-   +------------+-----------------------+-------------------+
-   |  14        |          IV_3         |   Section 4       |
+   |  11        |       KEYSTREAM_3     |   Section 4       |
    +------------+-----------------------+-------------------+
 
                     Figure 5: EDHOC Info Label Registry.
@@ -717,6 +739,247 @@ Appendix A.  CDDL Definitions
    )
 
 Appendix B.  Test Vectors
+
+B.1.  message_1
+
+   Both endpoints are authenticated with Pre-Shred Keys (METHOD = 4)
+
+   METHOD (CBOR Data Item) (1 byte)
+   04
+
+   The initiator selects cipher suite 0.  A single cipher suite is
+   encoded as an int:
+
+   SUITES_I (CBOR Data Item) (1 byte)
+   00
+
+   The Initiator creates an ephemeral key pair for use with the EDHOC
+   key exchange algorithm:
+
+   Initiator's ephemeral private key
+   X (Raw Value) (32 bytes)
+   09 97 2D FE F1 EA AB 92 6E C9 6E 80 05 FE D2 9F 70 FF BF 4E
+   36 1C 3A 06 1A 7A CD B5 17 0C 10 E5
+
+   Initiator's ephemeral public key
+   G_X (Raw Value) (32 bytes)
+   7E C6 81 02 94 06 02 AA B5 48 53 9B F4 2A 35 99 2D 95 72 49
+   EB 7F 18 88 40 6D 17 8A 04 C9 12 DB
+
+   The Initiator selects its connection identifier C_I to be the byte
+   string 0xA, which is encoded as 0xA since it is represented by the
+   1-byte CBOR int 10:
+
+   Connection identifier chosen by the Initiator
+   C_I (CBOR Data Item) (1 byte)
+   0A
+
+   No external authorization data
+
+   EAD_1 (CBOR Sequence) (0 bytes)
+
+   The Initiator constructs message_1:
+
+   message_1 (CBOR Sequence) (37 bytes)
+   04 02 58 20 7E C6 81 02 94 06 02 AA B5 48 53 9B F4 2A 35 99
+   2D 95 72 49 EB 7F 18 88 40 6D 17 8A 04 C9 12 DB 0A
+
+B.2.  message_2
+
+   The Responder supports the most preferred and selected cipher suite
+   0, so SUITES_I is acceptable.
+
+   The Responder creates an ephemeral key pair for use with the EDHOC
+   key exchange algorithm:
+
+   Responder's ephemeral private key
+   Y (Raw Value) (32 bytes)
+   1E 1C 8F 2D F1 AA 71 10 B3 9F 33 BA 5E A8 DC CF 31 41 1E B3
+   3D 4F 9A 09 4C F6 51 92 D3 35 A7 A3
+
+   Responder's ephemeral public key
+   G_Y (Raw Value) (32 bytes)
+   ED 15 6A 62 43 E0 AF EC 9E FB AA BC E8 42 9D 5A D5 E4 E1 C4
+   32 F7 6A 6E DE 8F 79 24 7B B9 7D 83
+
+   The Responder selects its connection identifier C_R to be the byte
+   string 0x5, which is encoded as 0x5 since it is represented by the
+   1-byte CBOR int -10:
+
+   Connection identifier chosen by the Responder
+   C_R (CBOR Data Item) (1 byte)
+   05
+
+   The transcript hash TH_2 is calculated using the EDHOC hash
+   algorithm: TH_2 = H( G_Y, H(message_1) ), where H(message_1) is:
+
+   H(message_1) (CBOR Data Item) (32 bytes)
+   19 CC 2D 2A 95 7E DD 80 10 90 42 FD E6 CC 20 C2 4B 6A 34 BC
+   21 C6 D4 9F EA 89 5D 4C 75 92 34 0E
+
+   TH_2 (CBOR Data Item) (32 bytes)
+   5B 48 34 AE 63 0A 8A 0E D0 B0 C6 F3 66 42 60 4D 01 64 78 C4
+   BC 81 87 BB 76 4D D4 0F 2B EE 3D DE
+
+   PRK_2e is specified in Section 4.1.2 of [RFC9528].  To compute it,
+   the Elliptic Curve Diffie-Hellman (ECDH) shared secret G_XY is
+   needed.  It is computed from G_X and Y or G_Y and X:
+
+   G_XY (Raw Value) (ECDH shared secret) (32 bytes)
+   2F 4A 79 9A 5A B0 C5 67 22 0C B6 72 08 E6 CF 8F 4C A5 FE 38
+   5D 1B 11 FD 9A 57 3D 41 60 F3 B0 B2
+
+   Then, PRK_2e is calculated as defined in Section 4.1.2 of [RFC9528]
+
+   PRK_2e (Raw Value) (32 bytes)
+   D0 39 D6 C3 CF 35 EC A0 CD F8 19 E3 25 79 C7 7E 1F 30 3E FC
+   C4 36 20 50 99 48 A9 FD 47 FB D9 29
+
+   Since the Responder authenticates using PSK, PRK_3e2m = PRK_2e.
+
+   PRK_3e2m (Raw Value) (32 bytes)
+   D0 39 D6 C3 CF 35 EC A0 CD F8 19 E3 25 79 C7 7E 1F 30 3E FC
+   C4 36 20 50 99 48 A9 FD 47 FB D9 29
+
+   No external authorization data:
+
+   EAD_2 (CBOR Sequence) (0 bytes)
+
+   The Responder constructs PLAINTEXT_2B:
+
+   PLAINTEXT_2B (CBOR Sequence) (1 byte)
+   05
+
+   The Responder computes KEYSTREAM_2 as defined in Section 4.1.2 of
+   [RFC9528]
+
+   KEYSTREAM_2 (CBOR Sequence) (1 byte)
+   EC
+
+   The Responder calculates CIPHERTEXT_2B as XOR between PLAINTEXT_2B
+   and KEYSTREAM_2:
+
+   CIPHERTEXT_2B (CBOR Sequence) (1 byte)
+   E9
+
+   The Responder constructs message_2 as defined in Section 5.3.1 of
+   [RFC9528]:
+
+   message_2 (CBOR Sequence) (35 bytes)
+   58 21 ED 15 6A 62 43 E0 AF EC 9E FB AA BC E8 42 9D 5A D5 E4
+   E1 C4 32 F7 6A 6E DE 8F 79 24 7B B9 7D 83 E9
+
+B.3.  message_3
+
+   The Initiator computes PRK_4e3m, as described in Section 4, using
+   SALT_4e3m and CRED_PSK:
+
+   SALT_4e3m (Raw Value) (32 bytes)
+   A7 C6 8F ED 7C F9 BB BC A3 83 F0 2B A4 27 45 51 EE DD 07 4A
+   1C F3 DB ED 4A 41 1F 33 1B 3A AA 59
+
+   CRED_PSK (Raw Value) (38 bytes)
+   A2 02 68 6D 79 64 6F 74 62 6F 74 08 A1 01 A3 01 04 02 41 10
+   20 50 50 93 0F F4 62 A7 7A 35 40 CF 54 63 25 DE A2 14
+
+   PRK_4e3m (Raw Value) (32 bytes)
+   6B 99 69 23 A8 81 B6 6E C4 05 AD 03 53 94 1A FB 2C DA A5 E2
+   AC 65 1D A0 57 9A 08 C7 86 50 2A 66
+
+   The transcript hash TH_3 is calculated using the EDHOC hash
+   algorithm:
+
+   TH_3 = H( TH_2, PLAINTEXT_2 )
+
+   TH_3 (CBOR Data Item) (32 bytes)
+   BC 3B C6 10 D7 25 16 CD 70 3E F7 4C 3A 98 20 17 E5 5D 70 D2
+   7F 57 01 E8 91 BD 35 11 9E B9 79 88
+
+   No external authorization data:
+
+   EAD_3 (CBOR Sequence) (0 bytes)
+
+   The Initiator constructs firstly PLAINTEXT_3B as defined in
+   Section 5.3.1.:
+
+   PLAINTEXT_3B (CBOR Sequence) (0 bytes)
+
+   It then computes CIPHERTEXT_3B as defined in Section 5.3.2.  It uses
+   ID_CRED_PSK, CRED_PSK and TH_3 as external_aad:
+
+   ID_CRED_PSK (CBOR Sequence) (1 byte)
+   10
+
+   CRED_PSK (Raw Value) (38 bytes)
+   A2 02 68 6D 79 64 6F 74 62 6F 74 08 A1 01 A3 01 04 02 41 10
+   20 50 50 93 0F F4 62 A7 7A 35 40 CF 54 63 25 DE A2 14
+
+   TH_3 (CBOR Data Item) (32 bytes)
+   A5 0B 64 8C E2 A6 23 BF C9 72 15 B2 6C 7C EE BD C4 4F 6F 79
+   EF AA BE 27 E8 A0 2A 25 C0 C4 93 CC
+
+   The initiator computes K_3 and IV_3
+
+   K_3 (CBOR Sequence) (16 bytes)
+   D8 57 B9 46 46 34 25 35 3C 3C DE BD CB 90 CB 26
+
+   IV_3 (CBOR Sequence) (13 bytes)
+   A1 F6 BE AF 84 64 83 2A 8D 02 C8 5F 04
+
+   It then computes CIPHERTEXT_3B:
+
+   CIPHERTEXT_3B (CBOR Sequence) (9 bytes)
+   48 D0 A4 37 3C 49 C1 76 9B
+
+   The Initiator computes KESYTREAM_3 as defined in Section 4:
+
+   KESYTREAM_3 (CBOR Sequence) ()
+   D0 1B 7A AD 4C AB BD 14 89 50
+
+   It then calculates PLAINTEXT_3A as stated in Section 5.3.2.:
+
+   PLAINTEXT_3A (CBOR Sequence) (10 bytes)
+   10 48 D0 A4 37 3C 49 C1 76 9B
+
+   It then uses KESYTREAM_3 to derive CIPHERTEXT_3A:
+
+   CIPHERTEXT_3A (CBOR Sequence) (10 bytes)
+   C2 47 AA 2F 94 B8 F9 41 21 C5
+
+   The Initiator computes message_3 as defined in Section 5.3.2.:
+
+   message_3 (CBOR Sequence) (11 bytes)
+   4A C2 47 AA 2F 94 B8 F9 41 21 C5
+
+   The transcript hash TH_4 is calculated using the EDHOC hash
+   algorithm: TH_4 = H( TH_3, ID_CRED_PSK, ? EAD_3, CRED_PSK )
+
+   TH_4 (CBOR Data Item) (32 bytes)
+   E5 67 45 39 75 66 CF F9 A6 93 DF 29 8D A4 F9 9E 1F 92 57 54
+   44 6B 5B 11 09 61 59 E5 C4 FC 0B FD
+
+B.4.  message_ 4
+
+   No external authorization data:
+
+   EAD_4 (CBOR Sequence) (0 bytes)
+
+   The Responder constructs PLAINTEXT_4:
+
+   PLAINTEXT_4 (CBOR Sequence) (0 bytes)
+
+   The Responder computes K_4 and IV_4
+
+   K_4 (CBOR Sequence) (16 bytes)
+   BC 34 CE B4 E3 58 36 06 A0 81 6A 53 A5 0A E1 07
+
+   IV_4 (CBOR Sequence) (13 bytes)
+   12 2B 58 9D EB 77 81 A1 A5 9D D4 42 7C
+
+   The Responder computes message_4:
+
+   message_4 (CBOR Sequence) (9 bytes)
+   48 69 C1 F1 2E 13 44 A3 93
 
 Appendix C.  Change Log
 
