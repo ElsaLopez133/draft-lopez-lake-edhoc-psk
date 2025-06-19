@@ -83,6 +83,9 @@ Table of Contents
    2.  Conventions and Definitions
    3.  Protocol
      3.1.  Credentials
+       3.1.1.  ID_CRED_PSK
+       3.1.2.  CRED_PSK
+       3.1.3.  Encoding and processing guidelines
      3.2.  Message Flow of EDHOC-PSK
    4.  Key Derivation
    5.  Message Formatting and Processing
@@ -192,28 +195,53 @@ Table of Contents
 
 3.1.  Credentials
 
-   Initiator and Responder are assumed to have a PSK (external PSK or
-   resumption PSK) with good amount of randomness and the requirements
-   that:
+   The Initiator and Responder are assumed to share a PSK (external PSK
+   or resumption PSK) with good amount of entropy and the following
+   requirements:
 
    *  Only the Initiator and the Responder have access to the PSK.
 
    *  The Responder is able to retrieve CRED_PSK and the PSK, using
       ID_CRED_PSK.
 
-   where:
+3.1.1.  ID_CRED_PSK
 
-   *  ID_CRED_PSK is a COSE header map containing header parameters that
-      can identify a pre-shared key.  For example:
+   ID_CRED_PSK is a COSE header map containing header parameters that
+   can identify a pre-shared key.  For example:
 
-   ID_CRED_PSK = {4 : h'0f' }
+   ID_CRED_PSK = {4 : h'0f' }; 4 = 'kid'
 
-   *  CRED_PSK is an authentication credential that identifies the PSK.
-      It is often represented as a CBOR Web Token (CWT) or CWT Claims
-      Set (CCS) [RFC8392] whose 'cnf' claim uses the confirmation method
-      'COSE_Key' to carry the PSK.  However, other formats for CRED_PSK
-      are also allowed, as long as they enable the recipient to identify
-      and retrieve the correct PSK.  An example of CRED_PSK would be:
+   The purpose of ID_CRED_PSK is to facilitate retrieval of the correct
+   PSK.  It is RECOMMENDED that ID_CRED_PSK uniquely identifies the
+   corresponding CRED_PSK, since ambiguity may require the recipient to
+   try multiple keys.
+
+   If ID_CRED_PSK consists of a single 'kid' parameter, the compact
+   encoding defined in Section 3.5.3.2 of [RFC9528], applies.  For
+   example, { 4 : h'0f' } may be compactly encoded in the plaintext as
+   the byte string h'0f'.
+
+3.1.2.  CRED_PSK
+
+   CRED_PSK is an authentication credential that identifies and
+   encapsulates the PSK.  It substitutes the public-key based
+   credentials CRED_I and CRED_R defined in [RFC9528].
+
+   While CRED_PSK may adopt encoding and representation patterns from
+   Section 3.5.2 and Section 3.5.3 of [RFC9528], it differs
+   fundamentally in that:
+
+   *  CRED_PSK contains or identifies a symmetric key, not a public
+      authentication key.
+
+   *  Authentication is achieved implicitly via the successful use of
+      the PSK to derive keying material and decrypt protected messages.
+
+   *  Signature-based fields such as Signature_or_MAC are not used.
+
+   A common representation of CRED_PSK is a CBOR Web Token (CWT) or CWT
+   Claims Set (CCS) [RFC8392] whose 'cnf' claim uses the confirmation
+   method 'COSE_Key' to carry the PSK.  An example of CRED_PSK would be:
 
    {                                               /CCS/
      2 : "mydotbot",                               /sub/
@@ -226,14 +254,59 @@ Table of Contents
      }
    }
 
-   The purpose of ID_CRED_PSK is to facilitate the retrieval of the PSK.
-   It is RECOMMENDED that it uniquely identifies the CRED_PSK as the
-   recipient might otherwise have to try several keys.  If ID_CRED_PSK
-   contains a single 'kid' parameter, then the compact encoding is
-   applied; see Section 3.5.3.2 of [RFC9528].  The authentication
-   credential CRED_PSK substitutes CRED_I and CRED_R specified in
-   [RFC9528], and, when applicable, MUST follow the same guidelines
-   described in Section 3.5.2 and Section 3.5.3 of [RFC9528].
+   Alternative formats for CRED_PSK MAY be used, as long as they allow
+   the recipient to identify and retrieve the correct PSK.  When the
+   authentication credential includes only a COSE_Key (e.g., a raw key
+   reference), it SHOULD be wrapped as a CCS by prefixing it with a
+   'cnf' claim.  In this case, the resulting CRED_PSK contains no
+   identity beyond the key itself.
+
+   Implementations SHOULD consider including identity information (e.g.,
+   the 'sub' claim) in CRED_PSK to protect against misbinding attacks;
+   see Appendix D.2 of [RFC9528].
+
+3.1.3.  Encoding and processing guidelines
+
+   The following guidelines apply to the encoding and handling of
+   CRED_PSK and ID_CRED_PSK.
+
+   *  If CRED_PSK is CBOR-encoded, it SHOULD use deterministic encoding
+      as specified in Sections 4.2.1 and 4.2.2. of [RFC8949].  This
+      ensures consistent identification and avoids interoperability
+      issues due to non-deterministic CBOR variants.
+
+   *  If CRED_PSK is provisioned out-of-band and transported by value,
+      it SHOULD be used as-is without re-encoding.  Re-encoding might
+      cause mismatches when comparing identifiers such as hash values or
+      'kid' references.
+
+   *  ID_CRED_PSK SHOULD uniquely identify the correspoding CRED_PSK to
+      avoid ambiguity.  In cases where ID_CRED_PSK is a reference to a
+      key identifier, care must be taken to ensure that 'kid' is
+      globally unique for the PSK.
+
+   *  When ID_CRED_PSK consists solely of a 'kid' parameter (i.e., { 4 :
+      kid }), the compact encoding optimization defined in
+      Section 3.5.3.2 of [RFC9528] MUST be applied in plaintext fields
+      (such as PLAINTEXT_3).  For example:
+
+      -  { 4 : h'0f' } encoded as h'0f' (CBOR byte string)
+
+      -  { 4 : 21 } encoded as 0x15 (CBOR integer)
+
+   These optimizations MUST NOT be applied in COSE header parameters or
+   other contexts where full map structure is required.
+
+   *  When necessary for authentication context (e.g., to mitigate
+      misbinding attacks), identity information such as a 'sub'
+      (subject) claim SHOULD be included in CRED_PSK.  If no such
+      identity is present, the authentication credential binds only to
+      the key.
+
+   *  Guidelines in [RFC9528] related to certificate chains, X.509 DER
+      encoding, or public key validation do not apply to CRED_PSK, since
+      it encapsulates a symmetric key and is not used for explicit
+      signature or certificate validation.
 
 3.2.  Message Flow of EDHOC-PSK
 
