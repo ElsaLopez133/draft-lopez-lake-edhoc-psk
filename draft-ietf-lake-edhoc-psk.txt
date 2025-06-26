@@ -576,15 +576,19 @@ Table of Contents
    use for the next resumption in the present "session series", as long
    as it supports PSK resumption.  To guarantee that both peers share
    the same resumption key, when a session is run using rPSK_i as a
-   resumption key - The Initiator can delete rPSK_i after having
-   successfully verified EDHOC message_4.  In this case, the Responder
-   will have derived the next rPSK_(i+1), which the Initiator can know
-   for sure, upon receiving EDHOC message_4.  - The Responder can delete
-   rPSK_(i-1), if any, after having successfully sent EDHOC message_4.
-   That is, upon receiving EDHOC message_3, the Responder knows for sure
-   that the other peer did derive rPSK_i at the end of the previous
-   session in the "session series", thus making it safe to delete the
-   previous resumption key rPSK_(i-1).
+   resumption key:
+
+   *  The Initiator can delete rPSK_i after having successfully verified
+      EDHOC message_4.  In this case, the Responder will have derived
+      the next rPSK_(i+1), which the Initiator can know for sure, upon
+      receiving EDHOC message_4.
+
+   *  The Responder can delete rPSK_(i-1), if any, after having
+      successfully sent EDHOC message_4.  That is, upon receiving EDHOC
+      message_3, the Responder knows for sure that the other peer did
+      derive rPSK_i at the end of the previous session in the "session
+      series", thus making it safe to delete the previous resumption key
+      rPSK_(i-1).
 
 6.1.  Cipher Suite Requirements for Resumption
 

@@ -1784,11 +1784,17 @@ ID_CRED_PSK = EDHOC_Exporter( 3, h'', id_cred_psk_length )
 </li>
       </ul>
 <p id="section-6-5">A peer that has successfully completed an EDHOC session, regardless of the used authentication method, <span class="bcp14">MUST</span> generate a resumption key to use for the next resumption in the present "session series", as long as it supports PSK resumption.
-To guarantee that both peers share the same resumption key, when a session is run using rPSK_i as a resumption key
-  - The Initiator can delete rPSK_i after having successfully verified EDHOC message_4.
-    In this case, the Responder will have derived the next rPSK_(i+1), which the Initiator can know for sure, upon receiving EDHOC message_4.
-  - The Responder can delete rPSK_(i-1), if any, after having successfully sent EDHOC message_4.
-    That is, upon receiving EDHOC message_3, the Responder knows for sure that the other peer did derive rPSK_i at the end of the previous session in the "session series", thus making it safe to delete the previous resumption key rPSK_(i-1).<a href="#section-6-5" class="pilcrow">¶</a></p>
+To guarantee that both peers share the same resumption key, when a session is run using rPSK_i as a resumption key:<a href="#section-6-5" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6-6.1">
+          <p id="section-6-6.1.1">The Initiator can delete rPSK_i after having successfully verified EDHOC message_4.
+In this case, the Responder will have derived the next rPSK_(i+1), which the Initiator can know for sure, upon receiving EDHOC message_4.<a href="#section-6-6.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-6-6.2">
+          <p id="section-6-6.2.1">The Responder can delete rPSK_(i-1), if any, after having successfully sent EDHOC message_4.
+That is, upon receiving EDHOC message_3, the Responder knows for sure that the other peer did derive rPSK_i at the end of the previous session in the "session series", thus making it safe to delete the previous resumption key rPSK_(i-1).<a href="#section-6-6.2.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
 <div id="cipher-suite-requirements-for-resumption">
 <section id="section-6.1">
         <h3 id="name-cipher-suite-requirements-f">
