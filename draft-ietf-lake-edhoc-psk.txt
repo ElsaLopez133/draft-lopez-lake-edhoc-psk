@@ -5,11 +5,11 @@
 LAKE Working Group                                        E. Lopez-Perez
 Internet-Draft                                                     Inria
 Intended status: Standards Track                             G. Selander
-Expires: 21 December 2025                              J. Preuß Mattsson
+Expires: 28 December 2025                              J. Preuß Mattsson
                                                                 Ericsson
                                                           R. Marin-Lopez
                                                     University of Murcia
-                                                            19 June 2025
+                                                            26 June 2025
 
 
              EDHOC Authenticated with Pre-Shared Keys (PSK)
@@ -61,7 +61,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 21 December 2025.
+   This Internet-Draft will expire on 28 December 2025.
 
 Copyright Notice
 
@@ -417,10 +417,35 @@ Table of Contents
    not used.  C_R, EAD_2, and KEYSTREAM_2 are defined in Section 5.3.2
    of [RFC9528].
 
+   MAC_2 is unnecessary because confidentiality and implicit
+   authentication are provided via the PSK-derived keystream encryption.
+   Only a party that possesses the correct PSK can correctly generate
+   the keystream used to encrypt PLAINTEXT_2B and thus decrypt
+   CIPHERTEXT_2.  This ensures that the initiator only proceeds if it is
+   confident the responder knows the correct PSK.
+
 5.2.3.  Initiator Processing of Message 2
+
+   Upon receiving message_2, the Initiator processes it as follows:
+
+   *  It computes KEYSTREAM_2, following Section 5.3.2 of [RFC9528].
+      The length of the keystream matches the expected length of
+      PLAINTEXT_2B.
+
+   *  It decrypts CIPHERTEXT_2 using binary XOR, i.e., PLAINTEXT_2B =
+      CIPHERTEXT_2 XOR KEYSTREAM_2
+
+   Successful decryption implies the Responder possessed the correct
+   PSK, since only the legitimate responder can generate the correct
+   KEYSTREAM_2.
 
    Compared to Section 5.3.3 of [RFC9528], ID_CRED_R is not made
    available to the application in step 4, and steps 5 and 6 are skipped
+
+   This approach ensures that the initiator only continues the protocol
+   if it successfully decrypts and parses CIPHERTEXT_2, thus providing
+   implicit authentication of the responder based on shared PSK
+   knowledge.
 
 5.3.  Message 3
 
@@ -467,7 +492,49 @@ Table of Contents
    The Initiator computes TH_4 = H( TH_3, ID_CRED_PSK, PLAINTEXT_3B,
    CRED_PSK ), defined in Section 4.
 
+   There is no need for MAC_3 or signature, since AEAD's built-in
+   integrity and the use of PSK-based key derivation provides implicit
+   authentication of the Initiator.
+
 5.3.3.  Responder Processing of Message 3
+
+   Upon receiving message_3, the Responder performs the following steps:
+
+   *  Derive the decryption key K_3 and IV_3 as defined in Section 4.
+
+   *  Parse the structure of message_3, which consists of a stream-
+      cipher encrypted structure, CIPHERTEXT_3 = PLAINTEXT_3A XOR
+      KEYSTREAM_3, where PLAINTEXT_3A = ( ID_CRED_PSK, CIPHERTEXT_3B )
+      and CIPHERTEXT_3B is the inner AEAD-encrypted object.
+
+   *  Generate KEYSTREAM_3 with the same method the initiator used.
+
+   *  Decrypt CIPHERTEXT_3 using binary XOR with KEYSTREAM_3, resulting
+      in PLAINTEXT_3A = ( ID_CRED_PSK, CIPHERTEXT_3B ).
+
+   *  Validate or match ID_CRED_PSK to identify which PSK to use.  If
+      the ID is unrecognized, the Responder aborts.
+
+   *  AEAD-decrypt CIPHERTEXT_3B using:
+
+      -  K_3, IV_3
+
+      -  external_aad = << ID_CRED_PSK, TH_3, CRED_PSK >>
+
+      -  protected = h''
+
+      -  AEAD algorithm from cipher suite
+
+   If verification fails, this indicates either the Initiator does not
+   know the correct PSK, or the message was tampered with.  Contrary, if
+   verification succeeds, the Responder conlcudes that the Initiator
+   knows the correct PSK, has correctly derived the transcript hash TH_3
+   and is actively participating in the protocol.
+
+   Lastly, the Responder computes TH_4 as defined in Section 4
+
+   No MAC_3 or signature is needed, as the AEAD tag guarantees both
+   integrity and authenticity in this symmetric setting.
 
 5.4.  Message 4
 
@@ -491,9 +558,9 @@ Table of Contents
 
    This section defines how PSKs are used for session resumption in
    EDHOC.  Following Section 4.2 of [RFC9528], EDHOC_Exporter can be
-   used to derive both CRED_PSK and ID_CRED_PSK:
+   used to derive both PSK and ID_CRED_PSK:
 
-   CRED_PSK = EDHOC_Exporter( 2, h'', resumption_psk_length )
+   PSK = EDHOC_Exporter( 2, h'', resumption_psk_length )
    ID_CRED_PSK = EDHOC_Exporter( 3, h'', id_cred_psk_length )
 
    where:

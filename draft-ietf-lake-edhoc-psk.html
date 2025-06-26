@@ -1050,7 +1050,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 </tr></thead>
 <tfoot><tr>
 <td class="left">Lopez-Perez, et al.</td>
-<td class="center">Expires 21 December 2025</td>
+<td class="center">Expires 28 December 2025</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1063,12 +1063,12 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-ietf-lake-edhoc-psk-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2025-06-19" class="published">19 June 2025</time>
+<time datetime="2025-06-26" class="published">26 June 2025</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2025-12-21">21 December 2025</time></dd>
+<dd class="expires"><time datetime="2025-12-28">28 December 2025</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -1130,7 +1130,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 21 December 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 28 December 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1615,6 +1615,7 @@ IV_3        = EDHOC_KDF( PRK_4e3m, 4, TH_3, iv_length )
 </li>
           </ul>
 <p id="section-5.2.2-3">Contrary to <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>, ID_CRED_R, MAC_2, and Signature_or_MAC_2 are not used. C_R, EAD_2, and KEYSTREAM_2 are defined in <span><a href="https://rfc-editor.org/rfc/rfc9528#section-5.3.2" class="relref">Section 5.3.2</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>.<a href="#section-5.2.2-3" class="pilcrow">¶</a></p>
+<p id="section-5.2.2-4">MAC_2 is unnecessary because confidentiality and implicit authentication are provided via the PSK-derived keystream encryption. Only a party that possesses the correct PSK can correctly generate the keystream used to encrypt PLAINTEXT_2B and thus decrypt CIPHERTEXT_2. This ensures that the initiator only proceeds if it is confident the responder knows the correct PSK.<a href="#section-5.2.2-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="initiator-processing-of-message-2">
@@ -1622,7 +1623,18 @@ IV_3        = EDHOC_KDF( PRK_4e3m, 4, TH_3, iv_length )
           <h4 id="name-initiator-processing-of-mes">
 <a href="#section-5.2.3" class="section-number selfRef">5.2.3. </a><a href="#name-initiator-processing-of-mes" class="section-name selfRef">Initiator Processing of Message 2</a>
           </h4>
-<p id="section-5.2.3-1">Compared to <span><a href="https://rfc-editor.org/rfc/rfc9528#section-5.3.3" class="relref">Section 5.3.3</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>, ID_CRED_R is not made available to the application in step 4, and steps 5 and 6 are skipped<a href="#section-5.2.3-1" class="pilcrow">¶</a></p>
+<p id="section-5.2.3-1">Upon receiving message_2, the Initiator processes it as follows:<a href="#section-5.2.3-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.2.3-2.1">
+              <p id="section-5.2.3-2.1.1">It computes KEYSTREAM_2, following <span><a href="https://rfc-editor.org/rfc/rfc9528#section-5.3.2" class="relref">Section 5.3.2</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>. The length of the keystream matches the expected length of PLAINTEXT_2B.<a href="#section-5.2.3-2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5.2.3-2.2">
+              <p id="section-5.2.3-2.2.1">It decrypts CIPHERTEXT_2 using binary XOR, i.e., PLAINTEXT_2B = CIPHERTEXT_2 XOR KEYSTREAM_2<a href="#section-5.2.3-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-5.2.3-3">Successful decryption implies the Responder possessed the correct PSK, since only the legitimate responder can generate the correct KEYSTREAM_2.<a href="#section-5.2.3-3" class="pilcrow">¶</a></p>
+<p id="section-5.2.3-4">Compared to <span><a href="https://rfc-editor.org/rfc/rfc9528#section-5.3.3" class="relref">Section 5.3.3</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>, ID_CRED_R is not made available to the application in step 4, and steps 5 and 6 are skipped<a href="#section-5.2.3-4" class="pilcrow">¶</a></p>
+<p id="section-5.2.3-5">This approach ensures that the initiator only continues the protocol if it successfully decrypts and parses CIPHERTEXT_2, thus providing implicit authentication of the responder based on shared PSK knowledge.<a href="#section-5.2.3-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1687,13 +1699,52 @@ IV_3        = EDHOC_KDF( PRK_4e3m, 4, TH_3, iv_length )
 </li>
           </ul>
 <p id="section-5.3.2-2">The Initiator computes TH_4 = H( TH_3, ID_CRED_PSK, PLAINTEXT_3B, CRED_PSK ), defined in <a href="#key-der" class="auto internal xref">Section 4</a>.<a href="#section-5.3.2-2" class="pilcrow">¶</a></p>
+<p id="section-5.3.2-3">There is no need for MAC_3 or signature, since AEAD's built-in integrity and the use of PSK-based key derivation provides implicit authentication of the Initiator.<a href="#section-5.3.2-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="responder-processing-of-message-3">
 <section id="section-5.3.3">
           <h4 id="name-responder-processing-of-mes">
 <a href="#section-5.3.3" class="section-number selfRef">5.3.3. </a><a href="#name-responder-processing-of-mes" class="section-name selfRef">Responder Processing of Message 3</a>
-        </h4>
+          </h4>
+<p id="section-5.3.3-1">Upon receiving message_3, the Responder performs the following steps:<a href="#section-5.3.3-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.3.3-2.1">
+              <p id="section-5.3.3-2.1.1">Derive the decryption key K_3 and IV_3 as defined in <a href="#key-der" class="auto internal xref">Section 4</a>.<a href="#section-5.3.3-2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5.3.3-2.2">
+              <p id="section-5.3.3-2.2.1">Parse the structure of message_3, which consists of a stream-cipher encrypted structure, CIPHERTEXT_3 = PLAINTEXT_3A XOR KEYSTREAM_3, where PLAINTEXT_3A = ( ID_CRED_PSK, CIPHERTEXT_3B ) and CIPHERTEXT_3B is the inner AEAD-encrypted object.<a href="#section-5.3.3-2.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5.3.3-2.3">
+              <p id="section-5.3.3-2.3.1">Generate KEYSTREAM_3 with the same method the initiator used.<a href="#section-5.3.3-2.3.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5.3.3-2.4">
+              <p id="section-5.3.3-2.4.1">Decrypt CIPHERTEXT_3 using binary XOR with KEYSTREAM_3, resulting in PLAINTEXT_3A = ( ID_CRED_PSK, CIPHERTEXT_3B ).<a href="#section-5.3.3-2.4.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5.3.3-2.5">
+              <p id="section-5.3.3-2.5.1">Validate or match ID_CRED_PSK to identify which PSK to use. If the ID is unrecognized, the Responder aborts.<a href="#section-5.3.3-2.5.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5.3.3-2.6">
+              <p id="section-5.3.3-2.6.1">AEAD-decrypt CIPHERTEXT_3B using:<a href="#section-5.3.3-2.6.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.3.3-2.6.2.1">
+                  <p id="section-5.3.3-2.6.2.1.1">K_3, IV_3<a href="#section-5.3.3-2.6.2.1.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-5.3.3-2.6.2.2">
+                  <p id="section-5.3.3-2.6.2.2.1">external_aad = &lt;&lt; ID_CRED_PSK, TH_3, CRED_PSK &gt;&gt;<a href="#section-5.3.3-2.6.2.2.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-5.3.3-2.6.2.3">
+                  <p id="section-5.3.3-2.6.2.3.1">protected = h''<a href="#section-5.3.3-2.6.2.3.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-5.3.3-2.6.2.4">
+                  <p id="section-5.3.3-2.6.2.4.1">AEAD algorithm from cipher suite<a href="#section-5.3.3-2.6.2.4.1" class="pilcrow">¶</a></p>
+</li>
+              </ul>
+</li>
+          </ul>
+<p id="section-5.3.3-3">If verification fails, this indicates either the Initiator does not know the correct PSK, or the message was tampered with. Contrary, if verification succeeds, the Responder conlcudes that the Initiator knows the correct PSK, has correctly derived the transcript hash TH_3 and is actively participating in the protocol.<a href="#section-5.3.3-3" class="pilcrow">¶</a></p>
+<p id="section-5.3.3-4">Lastly, the Responder computes TH_4 as defined in <a href="#key-der" class="auto internal xref">Section 4</a><a href="#section-5.3.3-4" class="pilcrow">¶</a></p>
+<p id="section-5.3.3-5">No MAC_3 or signature is needed, as the AEAD tag guarantees both integrity and authenticity in this symmetric setting.<a href="#section-5.3.3-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1716,10 +1767,10 @@ IV_3        = EDHOC_KDF( PRK_4e3m, 4, TH_3, iv_length )
 <a href="#section-6" class="section-number selfRef">6. </a><a href="#name-psk-usage-for-session-resum" class="section-name selfRef">PSK usage for Session Resumption</a>
       </h2>
 <p id="section-6-1">This section defines how PSKs are used for session resumption in EDHOC.
-Following <span><a href="https://rfc-editor.org/rfc/rfc9528#section-4.2" class="relref">Section 4.2</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>, EDHOC_Exporter can be used to derive both CRED_PSK and ID_CRED_PSK:<a href="#section-6-1" class="pilcrow">¶</a></p>
+Following <span><a href="https://rfc-editor.org/rfc/rfc9528#section-4.2" class="relref">Section 4.2</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>, EDHOC_Exporter can be used to derive both PSK and ID_CRED_PSK:<a href="#section-6-1" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-6-2">
 <pre>
-CRED_PSK = EDHOC_Exporter( 2, h'', resumption_psk_length )
+PSK = EDHOC_Exporter( 2, h'', resumption_psk_length )
 ID_CRED_PSK = EDHOC_Exporter( 3, h'', id_cred_psk_length )
 </pre><a href="#section-6-2" class="pilcrow">¶</a>
 </div>
