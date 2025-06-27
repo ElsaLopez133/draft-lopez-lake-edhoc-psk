@@ -1180,6 +1180,9 @@ Acknowledgments
    under Grant Agreement No 101167904 and EU CERTIFY under Grant
    Agreement No 101069471.
 
+   This work was supported partially by Vinnova - the Swedish Agency for
+   Innovation Systems - through the EUREKA CELTIC-NEXT project CYPRESS.
+
 Authors' Addresses
 
    Elsa Lopez-Perez
