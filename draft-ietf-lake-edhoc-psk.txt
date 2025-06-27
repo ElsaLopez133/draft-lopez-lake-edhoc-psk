@@ -5,11 +5,11 @@
 LAKE Working Group                                        E. Lopez-Perez
 Internet-Draft                                                     Inria
 Intended status: Standards Track                             G. Selander
-Expires: 28 December 2025                              J. Preuß Mattsson
+Expires: 29 December 2025                              J. Preuß Mattsson
                                                                 Ericsson
                                                           R. Marin-Lopez
                                                     University of Murcia
-                                                            26 June 2025
+                                                            27 June 2025
 
 
              EDHOC Authenticated with Pre-Shared Keys (PSK)
@@ -61,7 +61,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 28 December 2025.
+   This Internet-Draft will expire on 29 December 2025.
 
 Copyright Notice
 
@@ -254,9 +254,11 @@ Table of Contents
    'cnf' claim.  In this case, the resulting CRED_PSK contains no
    identity beyond the key itself.
 
-   Implementations SHOULD consider including identity information (e.g.,
-   the 'sub' claim) in CRED_PSK to protect against misbinding attacks;
-   see Appendix D.2 of [RFC9528].
+   The 'sub' claim in CRED_PSK is meant for identifying the sender
+   (e.g., I or R) to prevent misbinding attacks, as per Appendix D.2 of
+   [RFC9528].  However, it must not be included as input to key
+   derivation (e.g., EDHOC_Extract()), where only the cryptographic key
+   material (e.g., cnf) is used.
 
 3.1.3.  Encoding and processing guidelines
 
