@@ -1402,7 +1402,16 @@ ID_CRED_PSK = {4 : h'0f' }; 4 = 'kid'
 </pre><a href="#section-3.1.2-5" class="pilcrow">¶</a>
 </div>
 <p id="section-3.1.2-6">Alternative formats for CRED_PSK <span class="bcp14">MAY</span> be used, as long as they allow the recipient to identify and retrieve the correct PSK. When the authentication credential includes only a COSE_Key (e.g., a raw key reference), it <span class="bcp14">SHOULD</span> be wrapped as a CCS by prefixing it with a 'cnf' claim. In this case, the resulting CRED_PSK contains no identity beyond the key itself.<a href="#section-3.1.2-6" class="pilcrow">¶</a></p>
-<p id="section-3.1.2-7">The 'sub' claim in CRED_PSK is meant for identifying the sender (e.g., I or R) to prevent misbinding attacks, as per <span><a href="https://rfc-editor.org/rfc/rfc9528#appendix-D.2" class="relref">Appendix D.2</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>. However, it must not be included as input to key derivation (e.g., EDHOC_Extract()), where only the cryptographic key material (e.g., cnf) is used.<a href="#section-3.1.2-7" class="pilcrow">¶</a></p>
+<p id="section-3.1.2-7">Implementations <span class="bcp14">MUST</span> ensure that CRED_PSK values used by the Initiator and the Responder carry distinct identities in their sub claims (e.g., "42-50-31-FF-EF-37-32-39" and "23-11-58-AA-B3-7F-10"). This enables corrcte identification of parties and prevents misbinding attacks, as per <span><a href="https://rfc-editor.org/rfc/rfc9528#appendix-D.2" class="relref">Appendix D.2</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>. These identities are not transmitted on the wire, but they <span class="bcp14">MUST</span> be included in the computation of transcript hashes, such as:<a href="#section-3.1.2-7" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-3.1.2-8.1">
+              <p id="section-3.1.2-8.1.1">TH_3 = H( TH_2, PLAINTEXT_2, CRED_PSK )<a href="#section-3.1.2-8.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-3.1.2-8.2">
+              <p id="section-3.1.2-8.2.1">TH_4 = H( TH_3, ID_CRED_PSK, ? EAD_3, CRED_PSK )<a href="#section-3.1.2-8.2.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-3.1.2-9">This prevents reflection attacks and enforces correct binding of credentials to roles. Note that sub is used solely for identity binding and <span class="bcp14">MUST NOT</span> be included in the key derivation function, such as EDHOC_Extract(), where only the cryptographic key material (e.g., cnf) is used.<a href="#section-3.1.2-9" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="encoding-and-processing-guidelines">
@@ -1862,6 +1871,7 @@ That is, upon receiving EDHOC message_3, the Responder knows for sure that the o
 <a href="#section-7.1" class="section-number selfRef">7.1. </a><a href="#name-identity-protection" class="section-name selfRef">Identity protection</a>
         </h3>
 <p id="section-7.1-1">EDHOC-PSK encrypts ID_CRED_PSK in message 3 with a keystream derived from the ephemeral shared secret G_XY. As a consequence, contrary to the current EDHOC methods that protect the Initiator’s identity against active attackers and the Responder’s identity against passive attackers (See <span><a href="https://rfc-editor.org/rfc/rfc9528#section-9.1" class="relref">Section 9.1</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>), EDHOC-PSK provides identity protection for both the Initiator and the Responder against passive attackers.<a href="#section-7.1-1" class="pilcrow">¶</a></p>
+<p id="section-7.1-2">In symmetric key setups, using the same CRED_PSK for both parties or omitting role identity (e.g., sub) makes the protocol vulnerable to reflection or Selfie attacks. Separate identities in sub serve as non-cryptographic role binders and <span class="bcp14">MUST</span> be distinct.<a href="#section-7.1-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="mutual-authentication">
