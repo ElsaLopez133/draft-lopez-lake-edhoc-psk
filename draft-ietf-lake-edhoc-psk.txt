@@ -1056,7 +1056,7 @@ Appendix A.  CDDL Definitions
    )
 
    PLAINTEXT_3B = (
-     ? EAD_3
+     ? EAD_3,
    )
 
    message_4 = (
