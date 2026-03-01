@@ -5,12 +5,12 @@
 LAKE Working Group                                        E. Lopez-Perez
 Internet-Draft                                                     Inria
 Intended status: Standards Track                             G. Selander
-Expires: 29 August 2026                                J. Preuß Mattsson
+Expires: 2 September 2026                              J. Preuß Mattsson
                                                                 Ericsson
                                                           R. Marin-Lopez
                                                           F. Lopez-Gomez
                                                     University of Murcia
-                                                        25 February 2026
+                                                            1 March 2026
 
 
              EDHOC Authenticated with Pre-Shared Keys (PSK)
@@ -62,7 +62,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 29 August 2026.
+   This Internet-Draft will expire on 2 September 2026.
 
 Copyright Notice
 
@@ -310,14 +310,13 @@ Table of Contents
    *  When ID_CRED_PSK consists solely of a 'kid' parameter (i.e., { 4 :
       kid }), the compact encoding optimization defined in
       Section 3.5.3.2 of [RFC9528] MUST be applied in plaintext fields
-      (such as PLAINTEXT_3A).  For example:
+      (such as PLAINTEXT_3A).  These optimizations MUST NOT be applied
+      in COSE header parameters or in other contexts where the full map
+      structure is required.  For example:
 
       -  { 4 : h'0f' } encoded as h'0f' (CBOR byte string)
 
       -  { 4 : 21 } encoded as 0x15 (CBOR integer)
-
-   These optimizations MUST NOT be applied in COSE header parameters or
-   in other contexts where the full map structure is required.
 
    *  To mitigate misbinding attacks, identity information such as a
       'sub' (subject) claim MUST be included in both CRED_I and CRED_R.
@@ -1374,6 +1373,18 @@ B.6.  rPSK and rKID
 Appendix C.  Change Log
 
    RFC Editor: Please remove this appendix.
+
+   *  From -06 to -07
+
+      -  Fixed test vectors
+
+      -  Updated security considerations after formal analysis
+
+      -  Editorial changes
+
+   *  From -05 to -06
+
+      -  Editorial changes
 
    *  From -04 to -05
 
