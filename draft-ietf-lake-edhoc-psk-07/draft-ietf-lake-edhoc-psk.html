@@ -1,0 +1,2852 @@
+<!DOCTYPE html>
+<html lang="en" class="Internet-Draft">
+<head>
+<meta charset="utf-8">
+<meta content="Common,Latin" name="scripts">
+<meta content="initial-scale=1.0" name="viewport">
+<title>EDHOC Authenticated with Pre‑Shared Keys (PSK)</title>
+<meta content="Elsa Lopez-Perez" name="author">
+<meta content="Göran Selander" name="author">
+<meta content="John Preuß Mattsson" name="author">
+<meta content="Rafael Marin-Lopez" name="author">
+<meta content="Francisco Lopez-Gomez" name="author">
+<meta content="
+       This document specifies a Pre-Shared Key (PSK) authentication method for the Ephemeral Diffie-Hellman Over COSE (EDHOC) key exchange protocol. The PSK method enhances computational efficiency while providing mutual authentication, ephemeral key exchange, identity protection, and quantum resistance. It is particularly suited for systems where nodes share a PSK provided out-of-band (external PSK) and enables efficient session resumption with less computational overhead when the PSK is provided from a previous EDHOC session (resumption PSK). This document details the PSK method flow, key derivation changes, message formatting, processing, and security considerations. 
+    " name="description">
+<meta content="xml2rfc 3.31.0" name="generator">
+<meta content="draft-ietf-lake-edhoc-psk-latest" name="ietf.draft">
+<!-- Generator version information:
+  xml2rfc 3.31.0
+    Python 3.12.12
+    ConfigArgParse 1.7
+    google-i18n-address 3.1.1
+    intervaltree 3.2.1
+    Jinja2 3.1.6
+    lxml 6.0.2
+    platformdirs 4.5.1
+    pycountry 24.6.1
+    PyYAML 6.0.3
+    requests 2.32.5
+    wcwidth 0.3.0
+-->
+<link href="draft-ietf-lake-edhoc-psk.xml" rel="alternate" type="application/rfc+xml">
+<link href="#copyright" rel="license">
+<style type="text/css">@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('Lora SemiBold'), local('Lora-SemiBold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-semibold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Oxygen Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Oxygen Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+}
+
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-greek.woff2') format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-greek.woff2') format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  color-scheme: light dark;
+  --background-color: #fff;
+  --text-color: #222;
+  --title-color: #191919;
+  --link-color: #2a6496;
+  --highlight-color: #f9f9f9;
+  --line-color: #eee;
+  --pilcrow-weak: #ddd;
+  --pilcrow-strong: #bbb;
+  --small-font-size: 14.5px;
+  --font-mono: 'Oxygen Mono', monospace;
+  --font-title: "Sofia Sans Semi Condensed", sans-serif;
+  scrollbar-color: #bbb #eee;
+}
+body {
+  max-width: 600px;
+  margin: 75px auto;
+  padding: 0 5px;
+  color: var(--text-color);
+  background-color: var(--background-color);
+  font: 16px/22px "Lora", serif;
+  scroll-behavior: smooth;
+}
+
+.ears {
+  display: none;
+}
+
+/* headings */
+section {
+  clear: both;
+}
+.section-number {
+  padding-right: 0.5em;
+}
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-title);
+  font-weight: 680;
+  margin: 0.8em 0 0.3em;
+  font-size-adjust: 0.5;
+  color: var(--title-color);
+}
+h1#title {
+  font-size: 32px;
+  line-height: 40px;
+  clear: both;
+}
+h1#title, h1#rfcnum {
+  margin: 1.5em 0 0.2em;
+}
+h1#rfcnum + h1#title {
+  margin: 0.2em 0;
+}
+
+h1, h2, h3 {
+  font-size: 22px;
+  line-height: 27px;
+}
+h4, h5, h6 {
+  font-size: 20px;
+  line-height: 24px;
+}
+
+/* general structure */
+.author {
+  padding-bottom: 0.3em;
+  vertical-align: top;
+}
+#abstract+p {
+  font-size: 18px;
+  line-height: 24px;
+}
+#abstract+p code, #abstract+p samp, #abstract+p tt {
+  font-size: 16px;
+  line-height: 0;
+}
+
+p {
+  padding: 0;
+  margin: 0.5em 0;
+  text-align: left;
+}
+div {
+  margin: 0;
+}
+.alignRight.art-text {
+  background-color: var(--highlight-color);
+  border: 1px solid var(--line-color);
+  border-radius: 3px;
+  padding: 0.5em 1em 0;
+  margin-bottom: 0.5em;
+}
+.alignRight.art-text pre {
+  padding: 0;
+  width: auto;
+}
+.alignRight {
+  margin: 1em 0;
+}
+.alignRight > *:first-child {
+  border: none;
+  margin: 0;
+  float: right;
+  clear: both;
+}
+.alignRight > *:nth-child(2) {
+  clear: both;
+  display: block;
+  border: none;
+}
+svg {
+  display: block;
+}
+/* font-family isn't space-separated, but =~ will have to do */
+svg[font-family~="monospace" i], svg [font-family~="monospace" i] {
+  font-family: var(--font-mono);
+}
+.alignCenter.art-text {
+  background-color: var(--highlight-color);
+  border: 1px solid var(--line-color);
+  border-radius: 3px;
+  padding: 0.5em 1em 0;
+  margin-bottom: 0.5em;
+}
+.alignCenter.art-text pre {
+  padding: 0;
+  width: auto;
+}
+.alignCenter {
+  margin: 1em 0;
+}
+.alignCenter > *:first-child {
+  border: none;
+  /* this isn't optimal, but it's an existence proof.  PrinceXML doesn't
+     support flexbox yet.
+  */
+  display: table;
+  margin: 0 auto;
+}
+
+/* lists */
+ol, ul {
+  padding: 0;
+  margin: 0 0 0.5em 2em;
+  & :is(ol, ul) {
+    margin-left: 1em;
+  }
+}
+li {
+  margin: 0 0 0.25em 0;
+}
+ul.empty, .ulEmpty {
+  list-style-type: none;
+  & li {
+    margin-top: 0.5em;
+  }
+}
+:is(ul, ol).compact, .ulCompact, .olCompact {
+  margin: 0 0 0 2em;
+  & li {
+    margin: 0;
+    & :first-child { margin-top: 0; }
+    & :last-child { margin-bottom: 0; }
+  }
+}
+
+/* definition lists */
+dl {
+  clear: left;
+  --indent: 3ch;
+  /* --indent: attr(indent ch); not supported in any browser, but we can dream */
+  &.olPercent {
+    --indent: 5ch;
+    & > dt {
+      min-width: calc(var(--indent) - 2ch);
+    }
+  }
+  &.olPercent > dt {
+    float: none;
+  }
+
+  dl > dd > & {
+    margin-top: 0.5em;
+    margin-bottom: 0;
+  }
+}
+dl:not(.dlNewline) > dt {
+  float: left;
+  margin-right: 2ch;
+  min-width: 8ch;
+}
+dl > dd {
+  margin-bottom: .8em;
+  margin-left: var(--indent) !important; /* stupid element overrides */
+  min-height: 2ex;
+}
+:is(dl.compact, .dlCompact) > dd {
+  margin-bottom: 0;
+  & > :is(:first-child, .break:first-child + *) {
+    margin-top: 0;
+  }
+  & > :is(:last-child) {
+    margin-bottom: 0;
+  }
+}
+:is(dd, span).break {
+  display: none;
+}
+
+/* links */
+a, a[href].selfRef:hover {
+  text-decoration: none;
+}
+a[href] {
+  color: var(--link-color);
+}
+a[href].selfRef, .iref + a[href].internal {
+  color: var(--text-color);
+}
+a[href]:hover {
+  text-decoration: underline;
+}
+a[href].selfRef:hover {
+  background-color: var(--highlight-color);
+}
+a.xref:is(.cite, .auto), :is(#status-of-memo, #copyright) a {
+  white-space: nowrap;
+}
+
+/* Figures */
+tt, code, pre {
+  background-color: var(--highlight-color);
+  font: 14px/22px var(--font-mono);
+}
+tt, code {
+  /* changing the font for inline elements leads to different ascender
+     and descender heights; as we want to retain baseline alignment,
+     remove leading to avoid altering the final height of lines
+     note: this fails if these blocks take an entire line,
+     a different solution would be great */
+  line-height: 0;
+}
+:is(h1, h2, h3, h4, h5, h6) :is(tt, code) {
+  font-size: 84%;
+}
+pre {
+  border: 1px solid var(--line-color);
+  font-size: 13.5px;
+  line-height: 16px;
+  letter-spacing: -0.2px;
+  margin: 5px;
+  padding: 5px;
+}
+img {
+  max-width: 100%;
+}
+figure {
+  margin: 0.5em 0;
+  padding: 0;
+}
+figure blockquote {
+  margin: 0.8em 0.4em 0.4em;
+}
+figcaption, caption {
+  font-style: italic;
+  margin: 0.5em 1.5em;
+  text-align: left;
+  caption-side: bottom;
+}
+@media screen {
+  /* Auto-collapse boilerplate. */
+  :is(#status-of-memo, #copyright) p {
+    margin: -2px 0;
+    max-height: 0;
+    transition: max-height 2s ease, margin 0.5s ease 0.5s;
+    overflow: hidden;
+  }
+  :is(#status-of-memo, #copyright):hover p,
+  :is(#status-of-memo, #copyright) h2:target ~ p {
+    margin: 0.5em 0;
+    max-height: 500px;
+    overflow: auto;
+  }
+  pre, svg {
+    display: inline-block;
+    /* In the horizontal direction, sometimes people make over-sized figures.
+       Scrollbars for those is therefore necessary: auto adds them as necessary..
+       In the vertical direction, the line-height can combine with the font
+       asender/descender height to produce scrollbars: hidden avoids that. */
+    overflow: auto hidden;
+  }
+  pre {
+    max-width: 100%;
+    width: calc(100% - 22px - 1em);
+  }
+  svg {
+    max-width: calc(100% - 22px - 1em);
+  }
+  figure pre {
+    display: block;
+    width: calc(100% - 25px);
+  }
+  :is(pre, svg) + .pilcrow {
+    display: inline-block;
+    vertical-align: text-bottom;
+    padding-bottom: 8px;
+  }
+}
+
+/* aside, blockquote */
+aside, blockquote {
+  margin-left: 0;
+  padding: 0 2em;
+  font-style: italic;
+}
+blockquote {
+  margin: 1em 0;
+  border-left: 2px var(--pilcrow-strong) solid;
+}
+cite {
+  display: block;
+  text-align: right;
+  font-style: italic;
+}
+
+/* tables */
+table {
+  width: auto;
+  max-width: 100%;
+  margin: 0 0 1em;
+  border-collapse: collapse;
+}
+table.right {
+  margin-left: auto;
+}
+table.center {
+  margin-left: auto;
+  margin-right: auto;
+}
+table.left {
+  margin-right: auto;
+}
+table .text-left {
+  text-align: left;
+}
+table .text-center {
+  text-align: center;
+}
+table .text-right {
+  text-align: right;
+}
+
+thead, tbody {
+  border: 1px solid var(--line-color);
+}
+th, td {
+  text-align: left;
+  vertical-align: top;
+  padding: 5px 10px;
+}
+th {
+  background-color: var(--line-color);
+}
+:is(tr:nth-child(2n), thead+tbody > tr:nth-child(2n+1)) > td {
+  background-color: var(--background-color);
+}
+:is(tr:nth-child(2n+1), thead+tbody > tr:nth-child(2n)) > td {
+  background-color: var(--highlight-color);
+}
+table caption {
+  margin: 0;
+  padding: 3px 0 3px 1em;
+}
+table p {
+  margin: 0;
+}
+
+/* pilcrow */
+a.pilcrow {
+  margin-left: 3px;
+  opacity: 0.2;
+  user-select: none;
+  &[href] {
+    color: var(--pilcrow-weak);
+    &:hover { text-decoration: none; }
+  }
+}
+@media not print {
+  :hover > a.pilcrow, a.pilcrow:focus {
+    opacity: 1;
+  }
+  a.pilcrow[href]:hover {
+    color: var(--pilcrow-strong);
+    background-color: transparent;
+  }
+}
+@media print {
+  a.pilcrow {
+    display: none;
+  }
+}
+
+/* misc */
+hr {
+  border: 0;
+  border-top: 1px solid var(--line-color);
+}
+.bcp14 {
+  font-variant: small-caps;
+  font-weight: 600;
+  font-size: var(--small-font-size);
+}
+.role {
+  font-variant: all-small-caps;
+}
+sub, sup {
+  line-height: 1;
+  font-size: 80%;
+}
+
+/* info block */
+#identifiers {
+  margin: 0;
+  font-size: var(--small-font-size);
+  line-height: 18px;
+  --identifier-width: 15ch;
+  & dt {
+    width: var(--identifier-width);
+    min-width: var(--identifier-width);
+    clear: left;
+    float: left;
+    text-align: right;
+    margin-right: 1ch;
+  }
+  & dd {
+    margin: 0;
+    margin-left: calc(1em + var(--identifier-width)) !important;
+    min-width: 5em;
+  }
+  & .authors {
+    & .author {
+      display: inline-block;
+      margin-right: 1.5em;
+    }
+    & .org {
+      font-style: italic;
+    }
+  }
+}
+
+/* The prepared/rendered info at the very bottom of the page */
+.docInfo {
+  color: #999;
+  font-size: 0.9em;
+  font-style: italic;
+  margin-top: 2em;
+}
+.docInfo .prepared {
+  float: right;
+}
+
+/* table of contents */
+#toc {
+  padding: 0.75em 0 2em 0;
+  margin-bottom: 1em;
+
+  & nav {
+    & ul {
+      margin: 0 0.5em 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    & li {
+      line-height: 1.3em;
+      margin: 2px 0;
+      padding-left: 1.2em;
+      text-indent: -1.2em;
+    }
+  }
+  & a.xref {
+    white-space: normal;
+  }
+}
+
+.references {
+  & > dt {
+    text-align: right;
+    font-weight: bold;
+    min-width: 10ch;
+    margin-right: 1.5ch;
+    &:target::before {
+      content: "⇒";
+      margin: 0 10px 0 -25px;
+    }
+  }
+  & > dd {
+    margin-left: 12ch !important;
+    overflow: visible;
+    & .refInstance {
+      margin-bottom: 0.8em;
+    }
+    & .ascii {
+      margin-bottom: 0.25em;
+    }
+  }
+}
+
+#rfc\.index\.index + ul {
+  margin-left: 0;
+}
+
+/* authors */
+address.vcard {
+  font-style: normal;
+  max-width: 20em;
+  margin: 1em auto 1em 0;
+
+  & .nameRole {
+    font-weight: 700;
+    margin-left: 0;
+  }
+  & .label {
+    margin: 0.5em 0;
+  }
+  & .type {
+    display: none;
+  }
+  & .alternative-contact {
+    margin: 0.5em 0 0.25em 0;
+  }
+  & .non-ascii {
+    margin: 0 0 0 2em;
+  }
+  & div.left {
+    text-align: left;
+  }
+  & div.right {
+    text-align: right;
+  }
+}
+
+hr.addr {
+  border-top: 1px dashed;
+  margin: 0;
+  color: #ddd;
+  max-width: calc(100% - 16px);
+}
+@media (min-width: 500px) {
+  #authors-addresses > section {
+    column-count: 2;
+    column-gap: 20px;
+  }
+  #authors-addresses > section > h2 {
+    column-span: all;
+  }
+  /* hack for break-inside: avoid-column */
+  #authors-addresses address {
+    display: inline-block;
+    break-inside: avoid-column;
+  }
+}
+
+/* Comments */
+.rfcEditorRemove p:first-of-type {
+  font-style: italic;
+}
+.cref {
+  background-color: rgba(249, 232, 105, 0.3);
+  padding: 2px 4px;
+}
+.crefSource {
+  font-style: italic;
+}
+
+@media screen {
+  #toc nav {
+    font-family: var(--font-title);
+    font-weight: 360;
+    & > ul { margin-bottom: 2em; }
+    & ul {
+      margin: 0 0 0 4px;
+      & :is(p, li) {
+        margin: 2px 0;
+      }
+    }
+  }
+  #toc a.toplink {
+    float: right;
+  }
+}
+@media not screen {
+  #toc a.toplink {
+    display: none;
+  }
+}
+
+
+/* TOC layout for smaller screens */
+@media screen and (max-width: 929px) {
+  #toc {
+    position: fixed;
+    z-index: 2;
+    top: 0;
+    right: 0;
+    padding: 1px 0 0 0;
+    margin: 0;
+    border-bottom: 1px solid #ccc;
+    opacity: 0.6;
+  }
+  #toc h2 {
+    margin: 0;
+    padding: 2px 0 2px 6px;
+    padding-right: 1em;
+    font-size: 18px;
+    line-height: 24px;
+    min-width: 190px;
+    text-align: right;
+    background-color: #444;
+    color: white;
+    cursor: pointer;
+    &::before { /* css hamburger */
+      float: right;
+      position: relative;
+      width: 1em;
+      height: 1px;
+      left: -164px;
+      margin: 8px 0 0 0;
+      background: white none repeat scroll 0 0;
+      box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
+      content: "";
+    }
+  }
+  #toc nav {
+    display: none;
+    background-color: var(--background-color);
+    padding: 0.5em 1em 1em;
+    overflow: auto;
+    overscroll-behavior: contain;
+    height: calc(100vh - 48px);
+    border-left: 1px solid #ddd;
+  }
+  #toc.active {
+    opacity: 1;
+    & nav { display: block; }
+  }
+  /* Make the collapsed ToC header render white on gray also when it's a link */
+  #toc h2 a,
+  #toc h2 a:is(:link, :focus, :hover),
+  #toc a.toplink,
+  #toc a.toplink:hover {
+    color: white;
+    background-color: #444;
+    text-decoration: none;
+  }
+  #toc a.toplink {
+    margin: 2px 0.5em 0;
+  }
+}
+
+/* TOC layout for wide screens */
+@media screen and (min-width: 930px) {
+  body {
+    padding-right: 360px;
+    padding-right: calc(min(180px + 20%, 500px));
+  }
+  #toc {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    right: calc(50vw - 480px);
+    width: 312px;
+    margin: 0;
+    padding: 0;
+    z-index: 1;
+  }
+  #toc h2 {
+    margin: 0;
+    padding: 0.25em 1em 1em 0;
+  }
+  #toc nav {
+    display: block;
+    height: calc(90vh - 84px);
+    bottom: 0;
+    padding: 0.5em 0 2em;
+    overflow: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+  img { /* future proofing */
+    max-width: 100%;
+    height: auto;
+  }
+  #toc a.toplink {
+    margin: 8px 0.5em 0;
+  }
+}
+
+/* pagination */
+@media print {
+  body {
+    width: 100%;
+  }
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+  #n-copyright-notice {
+    border-bottom: none;
+  }
+  #toc, #n-introduction {
+    page-break-before: always;
+  }
+  #toc {
+    border-top: none;
+    padding-top: 0;
+  }
+  figure, pre, .vcard {
+    page-break-inside: avoid;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+  }
+  :is(h2, h3, h4, h5, h6)+*, dd {
+    page-break-before: avoid;
+  }
+  pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 10pt;
+  }
+  table {
+    border: 1px solid #ddd;
+  }
+  td {
+    border-top: 1px solid #ddd;
+  }
+}
+
+@page :first {
+  padding-top: 0;
+  @top-left {
+    content: normal;
+    border: none;
+  }
+  @top-center {
+    content: normal;
+    border: none;
+  }
+  @top-right {
+    content: normal;
+    border: none;
+  }
+}
+
+@page {
+  size: A4;
+  margin-bottom: 45mm;
+  padding-top: 20px;
+}
+
+/* Dark mode. */
+@media (prefers-color-scheme: dark) {
+:root {
+  --background-color: #121212;
+  --text-color: #f0f0f0;
+  --title-color: #fff;
+  --link-color: #4da4f0;
+  --highlight-color: #282828;
+  --line-color: #444;
+  --pilcrow-weak: #444;
+  --pilcrow-strong: #666;
+  scrollbar-color: #777 #333;
+}
+}
+
+/* SVG Trick: a prefix match works because only black and white are allowed */
+svg :is([stroke="black"], [stroke^="#000"]) {
+  stroke: var(--text-color);
+}
+svg :is([stroke="white"], [stroke^="#fff"]) {
+  stroke: var(--background-color);
+}
+svg :is([fill="black"], [fill^="#000"], :not([fill])) {
+  fill: var(--text-color);
+}
+svg :is([fill="white"], [fill^="#fff"]) {
+  fill: var(--background-color);
+}
+</style>
+
+</head>
+<body class="xml2rfc">
+<table class="ears">
+<thead><tr>
+<td class="left">Internet-Draft</td>
+<td class="center">EDHOC-PSK</td>
+<td class="right">March 2026</td>
+</tr></thead>
+<tfoot><tr>
+<td class="left">Lopez-Perez, et al.</td>
+<td class="center">Expires 2 September 2026</td>
+<td class="right">[Page]</td>
+</tr></tfoot>
+</table>
+<div id="external-metadata" class="document-information"></div>
+<div id="internal-metadata" class="document-information">
+<dl id="identifiers">
+<dt class="label-workgroup">Workgroup:</dt>
+<dd class="workgroup">LAKE Working Group</dd>
+<dt class="label-internet-draft">Internet-Draft:</dt>
+<dd class="internet-draft">draft-ietf-lake-edhoc-psk-latest</dd>
+<dt class="label-published">Published:</dt>
+<dd class="published">
+<time datetime="2026-03-01" class="published">1 March 2026</time>
+    </dd>
+<dt class="label-intended-status">Intended Status:</dt>
+<dd class="intended-status">Standards Track</dd>
+<dt class="label-expires">Expires:</dt>
+<dd class="expires"><time datetime="2026-09-02">2 September 2026</time></dd>
+<dt class="label-authors">Authors:</dt>
+<dd class="authors">
+<div class="author">
+      <div class="author-name">E. Lopez-Perez</div>
+<div class="org">Inria</div>
+</div>
+<div class="author">
+      <div class="author-name">G. Selander</div>
+<div class="org">Ericsson</div>
+</div>
+<div class="author">
+      <div class="author-name">J. Preuß Mattsson</div>
+<div class="org">Ericsson</div>
+</div>
+<div class="author">
+      <div class="author-name">R. Marin-Lopez</div>
+<div class="org">University of Murcia</div>
+</div>
+<div class="author">
+      <div class="author-name">F. Lopez-Gomez</div>
+<div class="org">University of Murcia</div>
+</div>
+</dd>
+</dl>
+</div>
+<h1 id="title">EDHOC Authenticated with Pre‑Shared Keys (PSK)</h1>
+<section id="section-abstract">
+      <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
+<p id="section-abstract-1">This document specifies a Pre-Shared Key (PSK) authentication method for the Ephemeral Diffie-Hellman Over COSE (EDHOC) key exchange protocol. The PSK method enhances computational efficiency while providing mutual authentication, ephemeral key exchange, identity protection, and quantum resistance. It is particularly suited for systems where nodes share a PSK provided out-of-band (external PSK) and enables efficient session resumption with less computational overhead when the PSK is provided from a previous EDHOC session (resumption PSK). This document details the PSK method flow, key derivation changes, message formatting, processing, and security considerations.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+</section>
+<section class="note rfcEditorRemove" id="section-note.1">
+      <h2 id="name-about-this-document">
+<a href="#name-about-this-document" class="section-name selfRef">About This Document</a>
+      </h2>
+<p id="section-note.1-1">This note is to be removed before publishing as an RFC.<a href="#section-note.1-1" class="pilcrow">¶</a></p>
+<p id="section-note.1-2">
+        The latest revision of this draft can be found at <span><a href="https://lake-wg.github.io/psk/#go.draft-ietf-lake-edhoc-psk.html">https://lake-wg.github.io/psk/#go.draft-ietf-lake-edhoc-psk.html</a></span>.
+        Status information for this document may be found at <span><a href="https://datatracker.ietf.org/doc/draft-ietf-lake-edhoc-psk/">https://datatracker.ietf.org/doc/draft-ietf-lake-edhoc-psk/</a></span>.<a href="#section-note.1-2" class="pilcrow">¶</a></p>
+<p id="section-note.1-3">
+        Discussion of this document takes place on the
+        LAKE Working Group mailing list (<span><a href="mailto:lake@ietf.org">mailto:lake@ietf.org</a></span>),
+        which is archived at <span><a href="https://mailarchive.ietf.org/arch/browse/lake/">https://mailarchive.ietf.org/arch/browse/lake/</a></span>.
+        Subscribe at <span><a href="https://www.ietf.org/mailman/listinfo/lake/">https://www.ietf.org/mailman/listinfo/lake/</a></span>.<a href="#section-note.1-3" class="pilcrow">¶</a></p>
+<p id="section-note.1-4">Source for this draft and an issue tracker can be found at
+        <span><a href="https://github.com/lake-wg/psk">https://github.com/lake-wg/psk</a></span>.<a href="#section-note.1-4" class="pilcrow">¶</a></p>
+</section>
+<div id="status-of-memo">
+<section id="section-boilerplate.1">
+        <h2 id="name-status-of-this-memo">
+<a href="#name-status-of-this-memo" class="section-name selfRef">Status of This Memo</a>
+        </h2>
+<p id="section-boilerplate.1-1">
+        This Internet-Draft is submitted in full conformance with the
+        provisions of BCP 78 and BCP 79.<a href="#section-boilerplate.1-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-2">
+        Internet-Drafts are working documents of the Internet Engineering Task
+        Force (IETF). Note that other groups may also distribute working
+        documents as Internet-Drafts. The list of current Internet-Drafts is
+        at <span><a href="https://datatracker.ietf.org/drafts/current/">https://datatracker.ietf.org/drafts/current/</a></span>.<a href="#section-boilerplate.1-2" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-3">
+        Internet-Drafts are draft documents valid for a maximum of six months
+        and may be updated, replaced, or obsoleted by other documents at any
+        time. It is inappropriate to use Internet-Drafts as reference
+        material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-4">
+        This Internet-Draft will expire on 2 September 2026.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="copyright">
+<section id="section-boilerplate.2">
+        <h2 id="name-copyright-notice">
+<a href="#name-copyright-notice" class="section-name selfRef">Copyright Notice</a>
+        </h2>
+<p id="section-boilerplate.2-1">
+            Copyright (c) 2026 IETF Trust and the persons identified as the
+            document authors. All rights reserved.<a href="#section-boilerplate.2-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<span><a href="https://trustee.ietf.org/license-info">https://trustee.ietf.org/license-info</a></span>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.<a href="#section-boilerplate.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="toc">
+<section id="section-toc.1">
+        <a href="#" onclick="scroll(0,0)" class="toplink">▲</a><h2 id="name-table-of-contents">
+<a href="#name-table-of-contents" class="section-name selfRef">Table of Contents</a>
+        </h2>
+<nav class="toc"><ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1">
+            <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2">
+            <p id="section-toc.1-1.2.1" class="keepWithNext"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-conventions-and-definitions" class="internal xref">Conventions and Definitions</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3">
+            <p id="section-toc.1-1.3.1"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-protocol" class="internal xref">Protocol</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1">
+                <p id="section-toc.1-1.3.2.1.1"><a href="#section-3.1" class="auto internal xref">3.1</a>.  <a href="#name-credentials" class="internal xref">Credentials</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1.2.1">
+                    <p id="section-toc.1-1.3.2.1.2.1.1" class="keepWithNext"><a href="#section-3.1.1" class="auto internal xref">3.1.1</a>.  <a href="#name-id_cred_psk" class="internal xref">ID_CRED_PSK</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1.2.2">
+                    <p id="section-toc.1-1.3.2.1.2.2.1"><a href="#section-3.1.2" class="auto internal xref">3.1.2</a>.  <a href="#name-cred_i-and-cred_r" class="internal xref">CRED_I and CRED_R</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1.2.3">
+                    <p id="section-toc.1-1.3.2.1.2.3.1"><a href="#section-3.1.3" class="auto internal xref">3.1.3</a>.  <a href="#name-encoding-and-processing-gui" class="internal xref">Encoding and processing guidelines</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.2">
+                <p id="section-toc.1-1.3.2.2.1"><a href="#section-3.2" class="auto internal xref">3.2</a>.  <a href="#name-message-flow-of-edhoc-psk" class="internal xref">Message Flow of EDHOC-PSK</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
+            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-key-derivation" class="internal xref">Key Derivation</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
+            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-message-formatting-and-proc" class="internal xref">Message Formatting and Processing</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1">
+                <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="auto internal xref">5.1</a>.  <a href="#name-message-1" class="internal xref">Message 1</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2">
+                <p id="section-toc.1-1.5.2.2.1"><a href="#section-5.2" class="auto internal xref">5.2</a>.  <a href="#name-message-2" class="internal xref">Message 2</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2.2.1">
+                    <p id="section-toc.1-1.5.2.2.2.1.1"><a href="#section-5.2.1" class="auto internal xref">5.2.1</a>.  <a href="#name-formatting-of-message-2" class="internal xref">Formatting of Message 2</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2.2.2">
+                    <p id="section-toc.1-1.5.2.2.2.2.1"><a href="#section-5.2.2" class="auto internal xref">5.2.2</a>.  <a href="#name-responder-composition-of-me" class="internal xref">Responder Composition of Message 2</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2.2.3">
+                    <p id="section-toc.1-1.5.2.2.2.3.1"><a href="#section-5.2.3" class="auto internal xref">5.2.3</a>.  <a href="#name-initiator-processing-of-mes" class="internal xref">Initiator Processing of Message 2</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.3">
+                <p id="section-toc.1-1.5.2.3.1"><a href="#section-5.3" class="auto internal xref">5.3</a>.  <a href="#name-message-3" class="internal xref">Message 3</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.3.2.1">
+                    <p id="section-toc.1-1.5.2.3.2.1.1"><a href="#section-5.3.1" class="auto internal xref">5.3.1</a>.  <a href="#name-formatting-of-message-3" class="internal xref">Formatting of Message 3</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.3.2.2">
+                    <p id="section-toc.1-1.5.2.3.2.2.1"><a href="#section-5.3.2" class="auto internal xref">5.3.2</a>.  <a href="#name-initiator-composition-of-me" class="internal xref">Initiator Composition of Message 3</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.3.2.3">
+                    <p id="section-toc.1-1.5.2.3.2.3.1"><a href="#section-5.3.3" class="auto internal xref">5.3.3</a>.  <a href="#name-responder-processing-of-mes" class="internal xref">Responder Processing of Message 3</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.4">
+                <p id="section-toc.1-1.5.2.4.1"><a href="#section-5.4" class="auto internal xref">5.4</a>.  <a href="#name-message-4" class="internal xref">Message 4</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-psk-usage-for-session-resum" class="internal xref">PSK usage for Session Resumption</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1">
+                <p id="section-toc.1-1.6.2.1.1"><a href="#section-6.1" class="auto internal xref">6.1</a>.  <a href="#name-cipher-suite-requirements-f" class="internal xref">Cipher Suite Requirements for Resumption</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.2">
+                <p id="section-toc.1-1.6.2.2.1"><a href="#section-6.2" class="auto internal xref">6.2</a>.  <a href="#name-privacy-considerations-for-" class="internal xref">Privacy Considerations for Resumption</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.3">
+                <p id="section-toc.1-1.6.2.3.1"><a href="#section-6.3" class="auto internal xref">6.3</a>.  <a href="#name-security-considerations-for" class="internal xref">Security Considerations for Resumption</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-edhoc-psk-and-extensible-au" class="internal xref">EDHOC-PSK and Extensible Authentication Protocol (EAP)</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-edhoc-psk-and-oscore" class="internal xref">EDHOC-PSK and OSCORE</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
+            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.1">
+                <p id="section-toc.1-1.9.2.1.1"><a href="#section-9.1" class="auto internal xref">9.1</a>.  <a href="#name-identity-protection" class="internal xref">Identity Protection</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.2">
+                <p id="section-toc.1-1.9.2.2.1"><a href="#section-9.2" class="auto internal xref">9.2</a>.  <a href="#name-mutual-authentication" class="internal xref">Mutual Authentication</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.3">
+                <p id="section-toc.1-1.9.2.3.1"><a href="#section-9.3" class="auto internal xref">9.3</a>.  <a href="#name-protection-of-external-auth" class="internal xref">Protection of External Authorization Data (EAD)</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.4">
+                <p id="section-toc.1-1.9.2.4.1"><a href="#section-9.4" class="auto internal xref">9.4</a>.  <a href="#name-cryptographic-strength" class="internal xref">Cryptographic strength</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.5">
+                <p id="section-toc.1-1.9.2.5.1"><a href="#section-9.5" class="auto internal xref">9.5</a>.  <a href="#name-downgrade-protection" class="internal xref">Downgrade Protection</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.6">
+                <p id="section-toc.1-1.9.2.6.1"><a href="#section-9.6" class="auto internal xref">9.6</a>.  <a href="#name-post-quantum-considerations" class="internal xref">Post Quantum Considerations</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.7">
+                <p id="section-toc.1-1.9.2.7.1"><a href="#section-9.7" class="auto internal xref">9.7</a>.  <a href="#name-confidentiality" class="internal xref">Confidentiality</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.8">
+                <p id="section-toc.1-1.9.2.8.1"><a href="#section-9.8" class="auto internal xref">9.8</a>.  <a href="#name-independence-of-session-key" class="internal xref">Independence of Session Keys</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.9">
+                <p id="section-toc.1-1.9.2.9.1"><a href="#section-9.9" class="auto internal xref">9.9</a>.  <a href="#name-unified-approach-and-recomm" class="internal xref">Unified Approach and Recommendations</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
+            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.1">
+                <p id="section-toc.1-1.10.2.1.1"><a href="#section-10.1" class="auto internal xref">10.1</a>.  <a href="#name-edhoc-method-type-registry" class="internal xref">EDHOC Method Type Registry</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.2">
+                <p id="section-toc.1-1.10.2.2.1"><a href="#section-10.2" class="auto internal xref">10.2</a>.  <a href="#name-edhoc-exporter-label-regist" class="internal xref">EDHOC Exporter Label Registry</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
+            <p id="section-toc.1-1.11.1"><a href="#section-11" class="auto internal xref">11</a>. <a href="#name-references" class="internal xref">References</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.1">
+                <p id="section-toc.1-1.11.2.1.1"><a href="#section-11.1" class="auto internal xref">11.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.2">
+                <p id="section-toc.1-1.11.2.2.1"><a href="#section-11.2" class="auto internal xref">11.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
+            <p id="section-toc.1-1.12.1"><a href="#appendix-A" class="auto internal xref">Appendix A</a>.  <a href="#name-cddl-definitions" class="internal xref">CDDL Definitions</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13">
+            <p id="section-toc.1-1.13.1"><a href="#appendix-B" class="auto internal xref">Appendix B</a>.  <a href="#name-test-vectors" class="internal xref">Test Vectors</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.1">
+                <p id="section-toc.1-1.13.2.1.1"><a href="#appendix-B.1" class="auto internal xref">B.1</a>.  <a href="#name-message_1" class="internal xref">message_1</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.2">
+                <p id="section-toc.1-1.13.2.2.1"><a href="#appendix-B.2" class="auto internal xref">B.2</a>.  <a href="#name-message_2" class="internal xref">message_2</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.3">
+                <p id="section-toc.1-1.13.2.3.1"><a href="#appendix-B.3" class="auto internal xref">B.3</a>.  <a href="#name-message_3" class="internal xref">message_3</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.4">
+                <p id="section-toc.1-1.13.2.4.1"><a href="#appendix-B.4" class="auto internal xref">B.4</a>.  <a href="#name-message_4" class="internal xref">message_4</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.5">
+                <p id="section-toc.1-1.13.2.5.1"><a href="#appendix-B.5" class="auto internal xref">B.5</a>.  <a href="#name-prk_out-and-prk_exporter" class="internal xref">PRK_out and PRK_exporter</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.6">
+                <p id="section-toc.1-1.13.2.6.1"><a href="#appendix-B.6" class="auto internal xref">B.6</a>.  <a href="#name-rpsk-and-rkid" class="internal xref">rPSK and rKID</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14">
+            <p id="section-toc.1-1.14.1"><a href="#appendix-C" class="auto internal xref">Appendix C</a>.  <a href="#name-change-log" class="internal xref">Change Log</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15">
+            <p id="section-toc.1-1.15.1"><a href="#appendix-D" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16">
+            <p id="section-toc.1-1.16.1"><a href="#appendix-E" class="auto internal xref"></a><a href="#name-authors-addresses" class="internal xref">Authors' Addresses</a></p>
+</li>
+        </ul>
+</nav>
+</section>
+</div>
+<div id="introduction">
+<section id="section-1">
+      <h2 id="name-introduction">
+<a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
+      </h2>
+<p id="section-1-1">This document defines a Pre-Shared Key (PSK) authentication method for the Ephemeral Diffie-Hellman Over COSE (EDHOC) key exchange protocol <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>. The PSK method balances the complexity of credential distribution with computational efficiency. While symmetric key distribution is more complex than asymmetric approaches, PSK authentication offers greater computational efficiency compared to the methods outlined in <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>. The PSK method retains mutual authentication, asymmetric ephemeral key exchange, and identity protection established by <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">EDHOC with PSK authentication benefits use cases where two nodes share a Pre-Shared Key (PSK) provided out-of-band (external PSK). Examples include the Authenticated Key Management Architecture (AKMA) in mobile systems or the Peer and Authenticator in Extensible Authentication Protocol (EAP) systems. The PSK method enables the nodes to perform ephemeral key exchange, achieving Perfect Forward Secrecy (PFS). This ensures that even if the PSK is compromised, past communications remain secure against active attackers, while future communications are protected against passive attackers. Additionally, by leveraging the PSK for both authentication and key derivation, the method provides quantum-resistant key exchange and authentication even when used with ECDHE.<a href="#section-1-2" class="pilcrow">¶</a></p>
+<p id="section-1-3">Another important use case of PSK authentication in the EDHOC protocol is session resumption. This allows previously connected parties to quickly reestablish secure communication using pre-shared keys from a prior session, reducing the overhead associated with key exchange and asymmetric authentication. By using PSK authentication, EDHOC allows session keys to be refreshed with significantly lower computational overhead compared to public-key authentication. In this case, the resumption PSK is provisioned after the establishment of a previous EDHOC session by using EDHOC_Exporter. Thus, the external PSK serves as a long-term credential while the resumption PSK acts as a session key.<a href="#section-1-3" class="pilcrow">¶</a></p>
+<p id="section-1-4">Section 3 provides an overview of the PSK method flow and credentials. Section 4 outlines the changes to key derivation compared to <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>. Section 5 details message formatting and processing, and Section 6 describes the usage of PSK for resumption. Section 7 defines the use of EDHOC-PSK with OSCORE. Security considerations are described in Section 8, and Section 9 outlines the IANA considerations.<a href="#section-1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="conventions-and-definitions">
+<section id="section-2">
+      <h2 id="name-conventions-and-definitions">
+<a href="#section-2" class="section-number selfRef">2. </a><a href="#name-conventions-and-definitions" class="section-name selfRef">Conventions and Definitions</a>
+      </h2>
+<p id="section-2-1">The key words "<span class="bcp14">MUST</span>", "<span class="bcp14">MUST NOT</span>", "<span class="bcp14">REQUIRED</span>", "<span class="bcp14">SHALL</span>", "<span class="bcp14">SHALL NOT</span>", "<span class="bcp14">SHOULD</span>", "<span class="bcp14">SHOULD NOT</span>", "<span class="bcp14">RECOMMENDED</span>", "<span class="bcp14">NOT RECOMMENDED</span>",
+"<span class="bcp14">MAY</span>", and "<span class="bcp14">OPTIONAL</span>" in this document are to be interpreted as
+described in BCP 14 <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</span> <span>[<a href="#RFC8174" class="cite xref">RFC8174</a>]</span> when, and only when, they
+appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶</a></p>
+<p id="section-2-2">Readers are expected to be familiar with the terms and concepts described in EDHOC <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>, CBOR <span>[<a href="#RFC8949" class="cite xref">RFC8949</a>]</span>, CBOR Sequences <span>[<a href="#RFC8742" class="cite xref">RFC8742</a>]</span>, COSE Structures and Processing <span>[<a href="#RFC9052" class="cite xref">RFC9052</a>]</span>, COSE Algorithms <span>[<a href="#RFC9053" class="cite xref">RFC9053</a>]</span>, CWT and CCS <span>[<a href="#RFC8392" class="cite xref">RFC8392</a>]</span>, and the Concise Data Definition Language (CDDL) <span>[<a href="#RFC8610" class="cite xref">RFC8610</a>]</span>, which is used to express CBOR data structures.<a href="#section-2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="protocol">
+<section id="section-3">
+      <h2 id="name-protocol">
+<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-protocol" class="section-name selfRef">Protocol</a>
+      </h2>
+<p id="section-3-1">This document specifies a new EDHOC authentication method (see <span><a href="https://rfc-editor.org/rfc/rfc9528#section-3.2" class="relref">Section 3.2</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>) referred to as the Pre-Shared Key method (EDHOC-PSK). This method shares some features with, and differs in other respects from, the authentication methods previously defined in EDHOC.<a href="#section-3-1" class="pilcrow">¶</a></p>
+<p id="section-3-2">Authentication is based on a Pre-Shared Key (PSK) shared between the Initiator and the Responder. As in the methods defined in <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>, CRED_I and CRED_R are authentication credentials containing identifying information for the Initiator and Responder, respectively. However, unlike those methods, there is a single shared authentication credential identifier, ID_CRED_PSK, which the Responder uses to retrieve the PSK and the associated authentication credentials.<a href="#section-3-2" class="pilcrow">¶</a></p>
+<div id="credentials">
+<section id="section-3.1">
+        <h3 id="name-credentials">
+<a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-credentials" class="section-name selfRef">Credentials</a>
+        </h3>
+<p id="section-3.1-1">The Initiator and Responder are assumed to share a PSK (either an external PSK or a resumption PSK) with high entropy that meets the following requirements:<a href="#section-3.1-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-3.1-2.1">
+            <p id="section-3.1-2.1.1">Only the Initiator and the Responder have access to the PSK.<a href="#section-3.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-3.1-2.2">
+            <p id="section-3.1-2.2.1">The Responder can retrieve the PSK, CRED_I, and CRED_R, using ID_CRED_PSK.<a href="#section-3.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<div id="idcredpsk">
+<section id="section-3.1.1">
+          <h4 id="name-id_cred_psk">
+<a href="#section-3.1.1" class="section-number selfRef">3.1.1. </a><a href="#name-id_cred_psk" class="section-name selfRef">ID_CRED_PSK</a>
+          </h4>
+<p id="section-3.1.1-1">ID_CRED_PSK is a COSE header map containing header parameters that can identify a pre-shared key. For example:<a href="#section-3.1.1-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3.1.1-2">
+<pre>
+ID_CRED_PSK = {4 : h'0f' }; 4 = 'kid'
+</pre><a href="#section-3.1.1-2" class="pilcrow">¶</a>
+</div>
+<p id="section-3.1.1-3">The purpose of ID_CRED_PSK is to facilitate retrieval of the correct PSK. While ID_CRED_PSK use encoding and representation patterns from <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>, it differs fundamentally in that it identifies a symmetric key rather than a public authentication key.<a href="#section-3.1.1-3" class="pilcrow">¶</a></p>
+<p id="section-3.1.1-4">It is <span class="bcp14">RECOMMENDED</span> that ID_CRED_PSK uniquely or stochastically identifies the corresponding PSK. Uniqueness avoids ambiguity that could require the recipient to try multiple keys, while stochasticity reduces the risk of identifier collisions and supports stateless processing. These properties align with the requirements for rKID in session resumption.<a href="#section-3.1.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="credi-and-credr">
+<section id="section-3.1.2">
+          <h4 id="name-cred_i-and-cred_r">
+<a href="#section-3.1.2" class="section-number selfRef">3.1.2. </a><a href="#name-cred_i-and-cred_r" class="section-name selfRef">CRED_I and CRED_R</a>
+          </h4>
+<p id="section-3.1.2-1">CRED_I and CRED_R are authentication credentials associated with the PSK. The notation CRED_x refers to either CRED_I or CRED_R. Authentication is achieved implicitly through the successful use of the PSK to derive keying material, and to encrypt and subsequently decrypt protected messages.<a href="#section-3.1.2-1" class="pilcrow">¶</a></p>
+<p id="section-3.1.2-2">When using an external PSK, a common representation of CRED_I and CRED_R is a CBOR Web Token (CWT) or CWT Claims Set (CCS) <span>[<a href="#RFC8392" class="cite xref">RFC8392</a>]</span>, where the 'cnf' claim includes the confirmation method COSE_Key. An example of CRED_I and CRED_R is shown below:<a href="#section-3.1.2-2" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3.1.2-3">
+<pre>
+{                                               /CCS/
+  2 : "42-50-31-FF-EF-37-32-39",                /sub/
+  8 : {                                         /cnf/
+    1 : {                                       /COSE_Key/
+       1 : 4,                                   /kty/
+       2 : h'0f',                               /kid/
+    }
+  }
+}
+</pre><a href="#section-3.1.2-3" class="pilcrow">¶</a>
+</div>
+<div class="alignLeft art-text artwork" id="section-3.1.2-4">
+<pre>
+{                                               /CCS/
+  2 : "23-11-58-AA-B3-7F-10",                   /sub/
+  8 : {                                         /cnf/
+    1 : {                                       /COSE_Key/
+       1 : 4,                                   /kty/
+       2 : h'0f',                               /kid/
+    }
+  }
+}
+</pre><a href="#section-3.1.2-4" class="pilcrow">¶</a>
+</div>
+<p id="section-3.1.2-5">Alternative formats for CRED_I and CRED_R <span class="bcp14">MAY</span> be used. When a resumption PSK is employed, CRED_I and CRED_R <span class="bcp14">MUST</span> be the same credentials used in the initial EDHOC exchange, for example, public-key credentials such as X.509 certificates.<a href="#section-3.1.2-5" class="pilcrow">¶</a></p>
+<p id="section-3.1.2-6">Implementations <span class="bcp14">MUST</span> ensure that CRED_I and CRED_R are distinct, for example by including different identities in their sub-claims (e.g., "42-50-31-FF-EF-37-32-39" and "23-11-58-AA-B3-7F-10"). Ensuring distinct credentials simplifies correct party identification and prevents reflection and misbinding attacks, as described in <span><a href="https://rfc-editor.org/rfc/rfc9528#appendix-D.2" class="relref">Appendix D.2</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>.<a href="#section-3.1.2-6" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="encoding-and-processing-guidelines">
+<section id="section-3.1.3">
+          <h4 id="name-encoding-and-processing-gui">
+<a href="#section-3.1.3" class="section-number selfRef">3.1.3. </a><a href="#name-encoding-and-processing-gui" class="section-name selfRef">Encoding and processing guidelines</a>
+          </h4>
+<p id="section-3.1.3-1">The following guidelines apply to the encoding and handling of CRED_x and ID_CRED_PSK. Requirements on CRED_x applies both to CRED_I and to CRED_R.<a href="#section-3.1.3-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-3.1.3-2.1">
+              <p id="section-3.1.3-2.1.1">If CRED_x is CBOR-encoded, it <span class="bcp14">SHOULD</span> use deterministic encoding as specified in Sections <a href="https://rfc-editor.org/rfc/rfc8949#section-4.2.1" class="relref">4.2.1</a> and <a href="https://rfc-editor.org/rfc/rfc8949#section-4.2.2." class="relref">4.2.2.</a> of <span>[<a href="#RFC8949" class="cite xref">RFC8949</a>]</span>. Deterministic encoding ensures consistent identification and avoids interoperability issues caused by non-deterministic CBOR variants.<a href="#section-3.1.3-2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-3.1.3-2.2">
+              <p id="section-3.1.3-2.2.1">If CRED_x is provisioned out-of-band and transported by value, it <span class="bcp14">SHOULD</span> be used as received without re-encoding. Re-encoding can cause mismatches when comparing identifiers such as hash values or 'kid' references.<a href="#section-3.1.3-2.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-3.1.3-2.3">
+              <p id="section-3.1.3-2.3.1">ID_CRED_PSK <span class="bcp14">SHOULD</span> uniquely identify the corresponding PSK to avoid ambiguity. When ID_CRED_PSK contains a key identifier, care must be taken to ensure that 'kid' is unique for the PSK.<a href="#section-3.1.3-2.3.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-3.1.3-2.4">
+              <p id="section-3.1.3-2.4.1">When ID_CRED_PSK consists solely of a 'kid' parameter (i.e., { 4 : kid }), the compact encoding optimization defined in <span><a href="https://rfc-editor.org/rfc/rfc9528#section-3.5.3.2" class="relref">Section 3.5.3.2</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span> <span class="bcp14">MUST</span> be applied in plaintext fields (such as PLAINTEXT_3A). These optimizations <span class="bcp14">MUST NOT</span> be applied in COSE header parameters or in other contexts where the full map structure is required. For example:<a href="#section-3.1.3-2.4.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-3.1.3-2.4.2.1">
+                  <p id="section-3.1.3-2.4.2.1.1">{ 4 : h'0f' } encoded as h'0f' (CBOR byte string)<a href="#section-3.1.3-2.4.2.1.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-3.1.3-2.4.2.2">
+                  <p id="section-3.1.3-2.4.2.2.1">{ 4 : 21 } encoded as 0x15 (CBOR integer)<a href="#section-3.1.3-2.4.2.2.1" class="pilcrow">¶</a></p>
+</li>
+              </ul>
+</li>
+            <li class="normal" id="section-3.1.3-2.5">
+              <p id="section-3.1.3-2.5.1">To mitigate misbinding attacks, identity information such as a 'sub' (subject) claim <span class="bcp14">MUST</span> be included in both CRED_I and CRED_R.<a href="#section-3.1.3-2.5.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+</section>
+</div>
+</section>
+</div>
+<div id="message-flow-of-edhoc-psk">
+<section id="section-3.2">
+        <h3 id="name-message-flow-of-edhoc-psk">
+<a href="#section-3.2" class="section-number selfRef">3.2. </a><a href="#name-message-flow-of-edhoc-psk" class="section-name selfRef">Message Flow of EDHOC-PSK</a>
+        </h3>
+<p id="section-3.2-1">The message flow of EDHOC-PSK follows the structure defined in <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>, with authentication based on symmetric keys rather than public keys. For identity protection, credential-related message fields appear first in message_3.<a href="#section-3.2-1" class="pilcrow">¶</a></p>
+<p id="section-3.2-2">ID_CRED_PSK is encrypted using a key derived from a shared secret obtained through the first two messages. If Diffie-Hellman key exchange is used, G_X and G_Y are the ephemeral public keys, and the shared secret G_XY is the DH shared secret, as in <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>. If the Diffie-Hellman procedure is replaced by a KEM, then G_X and G_Y are encapsulation key and ciphertext, respectively, and the shared secret G_XY is derived by the KEM, see <span>[<a href="#I-D.spm-lake-pqsuites" class="cite xref">I-D.spm-lake-pqsuites</a>]</span>.<a href="#section-3.2-2" class="pilcrow">¶</a></p>
+<p id="section-3.2-3">The Responder authenticates the Initiator first. <a href="#fig-variant2" class="auto internal xref">Figure 1</a> illustrates the message flow of the EDHOC-PSK authentication method.<a href="#section-3.2-3" class="pilcrow">¶</a></p>
+<span id="name-overview-of-message-flow-of"></span><div id="fig-variant2">
+<figure id="figure-1">
+          <div id="section-3.2-4.1">
+            <div class="alignCenter art-svg artwork" id="section-3.2-4.1.1">
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" height="288" width="560" viewBox="0 0 560 288" class="diagram" text-anchor="middle" font-family="monospace" font-size="13px" stroke-linecap="round">
+                <path d="M 8,48 L 8,272" fill="none" stroke="black"></path>
+                <path d="M 552,48 L 552,272" fill="none" stroke="black"></path>
+                <path d="M 8,64 L 544,64" fill="none" stroke="black"></path>
+                <path d="M 16,128 L 552,128" fill="none" stroke="black"></path>
+                <path d="M 8,192 L 544,192" fill="none" stroke="black"></path>
+                <path d="M 16,256 L 552,256" fill="none" stroke="black"></path>
+                <polygon class="arrowhead" points="552,192 540,186.4 540,197.6" fill="black" transform="rotate(0,544,192)"></polygon>
+                <polygon class="arrowhead" points="552,64 540,58.4 540,69.6" fill="black" transform="rotate(0,544,64)"></polygon>
+                <polygon class="arrowhead" points="24,256 12,250.4 12,261.6" fill="black" transform="rotate(180,16,256)"></polygon>
+                <polygon class="arrowhead" points="24,128 12,122.4 12,133.6" fill="black" transform="rotate(180,16,128)"></polygon>
+                <g class="text">
+                  <text x="40" y="36">Initiator</text>
+                  <text x="520" y="36">Responder</text>
+                  <text x="184" y="52">METHOD,</text>
+                  <text x="256" y="52">SUITES_I,</text>
+                  <text x="316" y="52">G_X,</text>
+                  <text x="356" y="52">C_I,</text>
+                  <text x="400" y="52">EAD_1</text>
+                  <text x="280" y="84">message_1</text>
+                  <text x="204" y="116">G_Y,</text>
+                  <text x="244" y="116">Enc(</text>
+                  <text x="284" y="116">C_R,</text>
+                  <text x="328" y="116">EAD_2</text>
+                  <text x="360" y="116">)</text>
+                  <text x="280" y="148">message_2</text>
+                  <text x="180" y="180">Enc(</text>
+                  <text x="252" y="180">ID_CRED_PSK,</text>
+                  <text x="328" y="180">AEAD(</text>
+                  <text x="376" y="180">EAD_3</text>
+                  <text x="408" y="180">)</text>
+                  <text x="424" y="180">)</text>
+                  <text x="280" y="212">message_3</text>
+                  <text x="248" y="244">AEAD(</text>
+                  <text x="296" y="244">EAD_4</text>
+                  <text x="328" y="244">)</text>
+                  <text x="280" y="276">message_4</text>
+                </g>
+              </svg><a href="#section-3.2-4.1.1" class="pilcrow">¶</a>
+</div>
+</div>
+<figcaption><a href="#figure-1" class="selfRef">Figure 1</a>:
+<a href="#name-overview-of-message-flow-of" class="selfRef">Overview of Message Flow of EDHOC-PSK.</a>
+          </figcaption></figure>
+</div>
+<p id="section-3.2-5">This approach provides identity protection against passive attackers for both Initiator and Responder. EDHOC message_4 remains <span class="bcp14">OPTIONAL</span>, but is needed to authenticate the Responder and achieve mutual authentication in EDHOC when external applications (e.g., OSCORE) are not relied upon. In either case, the inclusion of a fourth message provides mutual authentication and explicit key confirmation (see <a href="#message-4" class="auto internal xref">Section 5.4</a>).<a href="#section-3.2-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="key-der">
+<section id="section-4">
+      <h2 id="name-key-derivation">
+<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-key-derivation" class="section-name selfRef">Key Derivation</a>
+      </h2>
+<p id="section-4-1">The pseudorandom keys (PRKs) used in the EDHOC-PSK authentication method are derived with EDHOC_Extract, as in <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>.<a href="#section-4-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-4-2">
+<pre>
+PRK  = EDHOC_Extract( salt, IKM )
+</pre><a href="#section-4-2" class="pilcrow">¶</a>
+</div>
+<p id="section-4-3">where <code>salt</code> and input keying material (<code>IKM</code>) are defined for each key. The definition of EDHOC_Extract depends on the EDHOC hash algorithm selected in the cipher suite, see <span><a href="https://rfc-editor.org/rfc/rfc9528#section-4.1.1" class="relref">Section 4.1.1</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>.<a href="#section-4-3" class="pilcrow">¶</a></p>
+<p id="section-4-4">To maintain a uniform key schedule across all EDHOC authentication methods, the same pseudorandom key notation (PRK_2e, PRK_3e2m, and PRK_4e3m) is retained. The index notation is preserved for consistency with other EDHOC authentication variants, even though it does not fully reflect the functional role of the keys in this method; for example, no MACs are used in EDHOC-PSK.<a href="#section-4-4" class="pilcrow">¶</a></p>
+<p id="section-4-5">PRK_2e is extracted as in <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span> with<a href="#section-4-5" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-4-6.1">
+          <p id="section-4-6.1.1"><code>salt</code> = TH_2, and<a href="#section-4-6.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-4-6.2">
+          <p id="section-4-6.2.1"><code>IKM</code> = G_XY,<a href="#section-4-6.2.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-4-7">where the transcript hash TH_2 = H( G_Y, H(message_1) ) is defined in <span><a href="https://rfc-editor.org/rfc/rfc9528#section-5.3.2" class="relref">Section 5.3.2</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>.<a href="#section-4-7" class="pilcrow">¶</a></p>
+<p id="section-4-8">SALT_4e3m is derived from PRK_3e2m and TH_3, as shown in Figure 6 of <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>.<a href="#section-4-8" class="pilcrow">¶</a></p>
+<p id="section-4-9">The other PRKs and transcript hashes are modified as specified below. <a href="#fig-variant2key" class="auto internal xref">Figure 2</a> lists the key derivations that differ from <span><a href="https://rfc-editor.org/rfc/rfc9528#section-4.1.2" class="relref">Section 4.1.2</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>.<a href="#section-4-9" class="pilcrow">¶</a></p>
+<span id="name-key-derivation-of-edhoc-psk"></span><div id="fig-variant2key">
+<figure id="figure-2">
+        <div class="alignCenter art-text artwork" id="section-4-10.1">
+<pre>
+PRK_3e2m     = PRK_2e
+KEYSTREAM_2A = EDHOC_KDF( PRK_2e,   0, TH_2,  plaintext_length_2a )
+PRK_4e3m     = EDHOC_Extract( SALT_4e3m, PSK )
+KEYSTREAM_3A = EDHOC_KDF( PRK_3e2m, 12, TH_3, plaintext_length_3a )
+K_3          = EDHOC_KDF( PRK_4e3m, 3, TH_3, key_length )
+IV_3         = EDHOC_KDF( PRK_4e3m, 4, TH_3, iv_length )
+</pre>
+</div>
+<figcaption><a href="#figure-2" class="selfRef">Figure 2</a>:
+<a href="#name-key-derivation-of-edhoc-psk" class="selfRef">Key Derivation of EDHOC-PSK.</a>
+        </figcaption></figure>
+</div>
+<p id="section-4-11">where:<a href="#section-4-11" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-4-12.1">
+          <p id="section-4-12.1.1">KEYSTREAM_2A is used to encrypt PLAINTEXT_2A in message_2.<a href="#section-4-12.1.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-4-12.1.2.1">
+              <p id="section-4-12.1.2.1.1">plaintext_length_2a is the length of PLAINTEXT_2A in message_2.<a href="#section-4-12.1.2.1.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+</li>
+        <li class="normal" id="section-4-12.2">
+          <p id="section-4-12.2.1">KEYSTREAM_3A is used to encrypt PLAINTEXT_3A (the concatenation of ID_CRED_PSK and CIPHERTEXT_3B) in message_3.<a href="#section-4-12.2.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-4-12.2.2.1">
+              <p id="section-4-12.2.2.1.1">plaintext_length_3a is the length of PLAINTEXT_3A in message_3.<a href="#section-4-12.2.2.1.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+</li>
+        <li class="normal" id="section-4-12.3">
+          <p id="section-4-12.3.1">TH_3 = H( TH_2, PLAINTEXT_2A ).<a href="#section-4-12.3.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-4-13">The definition of the transcript hash TH_4 is modified as follows:<a href="#section-4-13" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-4-14.1">
+          <p id="section-4-14.1.1">TH_4 = H( TH_3, ID_CRED_PSK, PLAINTEXT_3B, CRED_I, CRED_R )<a href="#section-4-14.1.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+</section>
+</div>
+<div id="message-formatting-and-processing">
+<section id="section-5">
+      <h2 id="name-message-formatting-and-proc">
+<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-message-formatting-and-proc" class="section-name selfRef">Message Formatting and Processing</a>
+      </h2>
+<p id="section-5-1">This section specifies the differences in message formatting and processing compared to <span><a href="https://rfc-editor.org/rfc/rfc9528#section-5" class="relref">Section 5</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>. Note that if any processing step fails, then the Responder <span class="bcp14">MUST</span> send an EDHOC error message back as defined in <span><a href="https://rfc-editor.org/rfc/rfc9528#section-6" class="relref">Section 6</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>, and the EDHOC session <span class="bcp14">MUST</span> be aborted.<a href="#section-5-1" class="pilcrow">¶</a></p>
+<div id="message-1">
+<section id="section-5.1">
+        <h3 id="name-message-1">
+<a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-message-1" class="section-name selfRef">Message 1</a>
+        </h3>
+<p id="section-5.1-1">Message 1 is formatted and processed as specified in <span><a href="https://rfc-editor.org/rfc/rfc9528#section-5.2" class="relref">Section 5.2</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>.<a href="#section-5.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="message-2">
+<section id="section-5.2">
+        <h3 id="name-message-2">
+<a href="#section-5.2" class="section-number selfRef">5.2. </a><a href="#name-message-2" class="section-name selfRef">Message 2</a>
+        </h3>
+<div id="formatting-of-message-2">
+<section id="section-5.2.1">
+          <h4 id="name-formatting-of-message-2">
+<a href="#section-5.2.1" class="section-number selfRef">5.2.1. </a><a href="#name-formatting-of-message-2" class="section-name selfRef">Formatting of Message 2</a>
+          </h4>
+<p id="section-5.2.1-1">Message 2 is formatted as specified in <span><a href="https://rfc-editor.org/rfc/rfc9528#section-5.3.1" class="relref">Section 5.3.1</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>.<a href="#section-5.2.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="responder-composition-of-message-2">
+<section id="section-5.2.2">
+          <h4 id="name-responder-composition-of-me">
+<a href="#section-5.2.2" class="section-number selfRef">5.2.2. </a><a href="#name-responder-composition-of-me" class="section-name selfRef">Responder Composition of Message 2</a>
+          </h4>
+<p id="section-5.2.2-1">CIPHERTEXT_2A is calculated with a binary additive stream cipher, using a keystream generated with EDHOC_Expand, and the following plaintext:<a href="#section-5.2.2-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.2.2-2.1">
+              <p id="section-5.2.2-2.1.1">PLAINTEXT_2A = ( C_R, ? EAD_2 )<a href="#section-5.2.2-2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5.2.2-2.2">
+              <p id="section-5.2.2-2.2.1">CIPHERTEXT_2A = PLAINTEXT_2A XOR KEYSTREAM_2A<a href="#section-5.2.2-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-5.2.2-3">C_R, EAD_2 are defined in <span><a href="https://rfc-editor.org/rfc/rfc9528#section-5.3.2" class="relref">Section 5.3.2</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>. In contrast to <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>, ID_CRED_R, MAC_2, and Signature_or_MAC_2 are not included in message_2. This omission is the primary difference from the signature and MAC-based authentication methods defined in <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>, as authentication in EDHOC-PSK relies solely on the shared PSK and the successful decryption of protected messages. KEYSTREAM_2A is defined in <a href="#key-der" class="auto internal xref">Section 4</a>.<a href="#section-5.2.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="initiator-processing-of-message-2">
+<section id="section-5.2.3">
+          <h4 id="name-initiator-processing-of-mes">
+<a href="#section-5.2.3" class="section-number selfRef">5.2.3. </a><a href="#name-initiator-processing-of-mes" class="section-name selfRef">Initiator Processing of Message 2</a>
+          </h4>
+<p id="section-5.2.3-1">Upon receiving message_2, the Initiator processes it as follows:<a href="#section-5.2.3-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.2.3-2.1">
+              <p id="section-5.2.3-2.1.1">Compute KEYSTREAM_2A as defined in <a href="#key-der" class="auto internal xref">Section 4</a>.<a href="#section-5.2.3-2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5.2.3-2.2">
+              <p id="section-5.2.3-2.2.1">Decrypt CIPHERTEXT_2A using binary XOR, i.e., PLAINTEXT_2A = CIPHERTEXT_2A XOR KEYSTREAM_2A<a href="#section-5.2.3-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-5.2.3-3">In contrast to <span><a href="https://rfc-editor.org/rfc/rfc9528#section-5.3.3" class="relref">Section 5.3.3</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>, ID_CRED_R is not made available to the application in step 4, and steps 5 and 6 are skipped.<a href="#section-5.2.3-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="message-3">
+<section id="section-5.3">
+        <h3 id="name-message-3">
+<a href="#section-5.3" class="section-number selfRef">5.3. </a><a href="#name-message-3" class="section-name selfRef">Message 3</a>
+        </h3>
+<div id="formatting-of-message-3">
+<section id="section-5.3.1">
+          <h4 id="name-formatting-of-message-3">
+<a href="#section-5.3.1" class="section-number selfRef">5.3.1. </a><a href="#name-formatting-of-message-3" class="section-name selfRef">Formatting of Message 3</a>
+          </h4>
+<p id="section-5.3.1-1">Message 3 is formatted as specified in <span><a href="https://rfc-editor.org/rfc/rfc9528#section-5.4.1" class="relref">Section 5.4.1</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>.<a href="#section-5.3.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="initiator-composition-of-message-3">
+<section id="section-5.3.2">
+          <h4 id="name-initiator-composition-of-me">
+<a href="#section-5.3.2" class="section-number selfRef">5.3.2. </a><a href="#name-initiator-composition-of-me" class="section-name selfRef">Initiator Composition of Message 3</a>
+          </h4>
+<ul class="normal">
+<li class="normal" id="section-5.3.2-1.1">
+              <p id="section-5.3.2-1.1.1">CIPHERTEXT_3A is computed using a binary additive stream cipher with a keystream generated by EDHOC_Expand, applied to the following plaintext:<a href="#section-5.3.2-1.1.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.3.2-1.1.2.1">
+                  <p id="section-5.3.2-1.1.2.1.1">PLAINTEXT_3A = ( ID_CRED_PSK / bstr / -24..23, CIPHERTEXT_3B )<a href="#section-5.3.2-1.1.2.1.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.3.2-1.1.2.1.2.1">
+                      <p id="section-5.3.2-1.1.2.1.2.1.1">If ID_CRED_PSK contains a single 'kid' parameter, i.e., ID_CRED_PSK = { 4 : kid_PSK }, then the compact encoding is applied, see <span><a href="https://rfc-editor.org/rfc/rfc9528#section-3.5.3.2" class="relref">Section 3.5.3.2</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>.<a href="#section-5.3.2-1.1.2.1.2.1.1" class="pilcrow">¶</a></p>
+</li>
+                    <li class="normal" id="section-5.3.2-1.1.2.1.2.2">
+                      <p id="section-5.3.2-1.1.2.1.2.2.1">For the case of plaintext_length exceeding the EDHOC_KDF output size, see <span><a href="https://rfc-editor.org/rfc/rfc9528#appendix-G" class="relref">Appendix G</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>.<a href="#section-5.3.2-1.1.2.1.2.2.1" class="pilcrow">¶</a></p>
+</li>
+                  </ul>
+</li>
+                <li class="normal" id="section-5.3.2-1.1.2.2">
+                  <p id="section-5.3.2-1.1.2.2.1">Compute KEYSTREAM_3A as in <a href="#key-der" class="auto internal xref">Section 4</a>.<a href="#section-5.3.2-1.1.2.2.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-5.3.2-1.1.2.3">
+                  <p id="section-5.3.2-1.1.2.3.1">CIPHERTEXT_3A = PLAINTEXT_3A XOR KEYSTREAM_3A<a href="#section-5.3.2-1.1.2.3.1" class="pilcrow">¶</a></p>
+</li>
+              </ul>
+</li>
+            <li class="normal" id="section-5.3.2-1.2">
+              <p id="section-5.3.2-1.2.1">CIPHERTEXT_3B is the 'ciphertext' of COSE_Encrypt0 object as defined in Section <a href="https://rfc-editor.org/rfc/rfc9528#section-5.2" class="relref">5.2</a> and Section <a href="https://rfc-editor.org/rfc/rfc9528#section-5.3" class="relref">5.3</a> of <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>, with the EDHOC AEAD algorithm of the selected cipher suite, using the encryption key K_3, the initialization vector IV_3 (if used by the AEAD algorithm), the parameters described in <span><a href="https://rfc-editor.org/rfc/rfc9528#section-5.2" class="relref">Section 5.2</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>, plaintext PLAINTEXT_3B and the following parameters as input:<a href="#section-5.3.2-1.2.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.3.2-1.2.2.1">
+                  <p id="section-5.3.2-1.2.2.1.1">protected = h''<a href="#section-5.3.2-1.2.2.1.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-5.3.2-1.2.2.2">
+                  <p id="section-5.3.2-1.2.2.2.1">external_aad = &lt;&lt; ID_CRED_PSK, TH_3, CRED_I, CRED_R &gt;&gt;<a href="#section-5.3.2-1.2.2.2.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-5.3.2-1.2.2.3">
+                  <p id="section-5.3.2-1.2.2.3.1">K_3 and IV_3 as defined in <a href="#key-der" class="auto internal xref">Section 4</a><a href="#section-5.3.2-1.2.2.3.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-5.3.2-1.2.2.4">
+                  <p id="section-5.3.2-1.2.2.4.1">PLAINTEXT_3B = ( ? EAD_3 )<a href="#section-5.3.2-1.2.2.4.1" class="pilcrow">¶</a></p>
+</li>
+              </ul>
+</li>
+          </ul>
+<p id="section-5.3.2-2">The Initiator computes TH_4 as defined in <a href="#key-der" class="auto internal xref">Section 4</a>.<a href="#section-5.3.2-2" class="pilcrow">¶</a></p>
+<p id="section-5.3.2-3">There is no need for MAC_3 or signature, since AEAD's built-in integrity and the use of PSK-based key derivation provides implicit authentication of the Initiator.<a href="#section-5.3.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="responder-processing-of-message-3">
+<section id="section-5.3.3">
+          <h4 id="name-responder-processing-of-mes">
+<a href="#section-5.3.3" class="section-number selfRef">5.3.3. </a><a href="#name-responder-processing-of-mes" class="section-name selfRef">Responder Processing of Message 3</a>
+          </h4>
+<p id="section-5.3.3-1">Upon receiving message_3, the Responder proceeds as follows:<a href="#section-5.3.3-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.3.3-2.1">
+              <p id="section-5.3.3-2.1.1">Derive K_3 and IV_3 as defined in <a href="#key-der" class="auto internal xref">Section 4</a>.<a href="#section-5.3.3-2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5.3.3-2.2">
+              <p id="section-5.3.3-2.2.1">Parse the structure of message_3, which consists of a stream-cipher encrypted structure, CIPHERTEXT_3A = PLAINTEXT_3A XOR KEYSTREAM_3A, where PLAINTEXT_3A = ( ID_CRED_PSK, CIPHERTEXT_3B ) and CIPHERTEXT_3B is the inner AEAD-encrypted object.<a href="#section-5.3.3-2.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5.3.3-2.3">
+              <p id="section-5.3.3-2.3.1">Generate KEYSTREAM_3A with the same method the Initiator used.<a href="#section-5.3.3-2.3.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5.3.3-2.4">
+              <p id="section-5.3.3-2.4.1">Decrypt CIPHERTEXT_3A using binary XOR with KEYSTREAM_3A to recover PLAINTEXT_3A.<a href="#section-5.3.3-2.4.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5.3.3-2.5">
+              <p id="section-5.3.3-2.5.1">Use ID_CRED_PSK to identify the authentication credentials and retrieve PSK.<a href="#section-5.3.3-2.5.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5.3.3-2.6">
+              <p id="section-5.3.3-2.6.1">AEAD-decrypt CIPHERTEXT_3B using:<a href="#section-5.3.3-2.6.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.3.3-2.6.2.1">
+                  <p id="section-5.3.3-2.6.2.1.1">K_3, IV_3<a href="#section-5.3.3-2.6.2.1.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-5.3.3-2.6.2.2">
+                  <p id="section-5.3.3-2.6.2.2.1">external_aad = &lt;&lt; ID_CRED_PSK, TH_3, CRED_I, CRED_R &gt;&gt;<a href="#section-5.3.3-2.6.2.2.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-5.3.3-2.6.2.3">
+                  <p id="section-5.3.3-2.6.2.3.1">protected = h''<a href="#section-5.3.3-2.6.2.3.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-5.3.3-2.6.2.4">
+                  <p id="section-5.3.3-2.6.2.4.1">AEAD algorithm from cipher suite<a href="#section-5.3.3-2.6.2.4.1" class="pilcrow">¶</a></p>
+</li>
+              </ul>
+</li>
+          </ul>
+<p id="section-5.3.3-3">If AEAD verification fails, this indicates a processing problem or that the message was tampered with. If it succeeds, the Responder concludes that the Initiator possesses the PSK, correctly derived TH_3, and is actively participating in the protocol.<a href="#section-5.3.3-3" class="pilcrow">¶</a></p>
+<p id="section-5.3.3-4">Finally, the Responder computes TH_4 as defined in <a href="#key-der" class="auto internal xref">Section 4</a>.<a href="#section-5.3.3-4" class="pilcrow">¶</a></p>
+<p id="section-5.3.3-5">No MAC_3 or signature is needed, as the AEAD tag guarantees both integrity and authenticity in this symmetric setting.<a href="#section-5.3.3-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="message-4">
+<section id="section-5.4">
+        <h3 id="name-message-4">
+<a href="#section-5.4" class="section-number selfRef">5.4. </a><a href="#name-message-4" class="section-name selfRef">Message 4</a>
+        </h3>
+<p id="section-5.4-1">Message 4 is formatted and processed as specified in <span><a href="https://rfc-editor.org/rfc/rfc9528#section-5.5" class="relref">Section 5.5</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>.<a href="#section-5.4-1" class="pilcrow">¶</a></p>
+<p id="section-5.4-2">After successfully verifying message_4, or another fourth message from the Responder protected with an exported application key such as an OSCORE message, the Initiator is assured that the Responder has derived PRK_out (key confirmation) and that no other party can derive this key.<a href="#section-5.4-2" class="pilcrow">¶</a></p>
+<p id="section-5.4-3">The Initiator <span class="bcp14">MUST NOT</span> persistently store PRK_out or application keys until it has successfully verified such a fourth message and the application has authenticated the Responder.<a href="#section-5.4-3" class="pilcrow">¶</a></p>
+<p id="section-5.4-4">Compared to <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>, the fourth message not only provides key confirmation but also authenticates the Responder. For mutual authentication a fourth message is therefore mandatory.<a href="#section-5.4-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="psk-resumption">
+<section id="section-6">
+      <h2 id="name-psk-usage-for-session-resum">
+<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-psk-usage-for-session-resum" class="section-name selfRef">PSK usage for Session Resumption</a>
+      </h2>
+<p id="section-6-1">This section specifies how EDHOC-PSK is used for session resumption in EDHOC. The EDHOC_Exporter, as defined in <span><a href="https://rfc-editor.org/rfc/rfc9528#section-4.2" class="relref">Section 4.2</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>, is used to derive the resumption parameters rPSK and rKID:<a href="#section-6-1" class="pilcrow">¶</a></p>
+<span id="name-resumption-parameters"></span><div id="fig-resumption">
+<figure id="figure-3">
+        <div class="alignCenter art-text artwork" id="section-6-2.1">
+<pre>
+rPSK         = EDHOC_Exporter( TBD2, h'', resumption_psk_length )
+rKID         = EDHOC_Exporter( TBD3, h'', id_cred_psk_length )
+rID_CRED_PSK = { 4 : rKID }
+</pre>
+</div>
+<figcaption><a href="#figure-3" class="selfRef">Figure 3</a>:
+<a href="#name-resumption-parameters" class="selfRef">Resumption Parameters.</a>
+        </figcaption></figure>
+</div>
+<p id="section-6-3">where:<a href="#section-6-3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6-4.1">
+          <p id="section-6-4.1.1">resumption_psk_length defaults to the key_length, i.e., the length of the encryption key of the EDHOC AEAD algorithm in the selected cipher suite of the session where the EDHOC_Exporter is invoked.<a href="#section-6-4.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-6-4.2">
+          <p id="section-6-4.2.1">id_cred_psk_length defaults to 2 bytes.<a href="#section-6-4.2.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-6-5">A peer that has successfully completed an EDHOC session, regardless of the authentication method used or whether the session was a PSK resumption, <span class="bcp14">MUST</span> generate a resumption key for the next resumption within the current "session series", provided that PSK resumption is supported.<a href="#section-6-5" class="pilcrow">¶</a></p>
+<p id="section-6-6">To ensure both peers share the same resumption key, when a resumption session is run using rPSK_i as the resumption key:<a href="#section-6-6" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6-7.1">
+          <p id="section-6-7.1.1">The Responder <span class="bcp14">MAY</span> delete the previous resumption key rPSK_(i-1), if present, after successfully verifying message_3. At that point the Responder can be certain that the Initiator has access to the current resumption key rPSK_i.<a href="#section-6-7.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-6-7.2">
+          <p id="section-6-7.2.1">The Initiator <span class="bcp14">MAY</span> delete rPSK_i after successfully verifying the fourth message. At that point, the Initiator can be certain that the Responder already has derived the next resumption key, rPSK_(i+1).<a href="#section-6-7.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-6-7.3">
+          <p id="section-6-7.3.1">The Responder <span class="bcp14">MAY</span> delete rPSK_i after successfully verifying a fifth message from the Initiator protected with an exported application key such as an OSCORE message, if present. At that point, the Initiator can be certain that the Responder already has derived the next resumption key, rPSK_(i+1).<a href="#section-6-7.3.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<div id="cipher-suite-requirements-for-resumption">
+<section id="section-6.1">
+        <h3 id="name-cipher-suite-requirements-f">
+<a href="#section-6.1" class="section-number selfRef">6.1. </a><a href="#name-cipher-suite-requirements-f" class="section-name selfRef">Cipher Suite Requirements for Resumption</a>
+        </h3>
+<p id="section-6.1-1">When using a resumption PSK derived from a previous EDHOC exchange:<a href="#section-6.1-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-6.1-2">
+<li id="section-6.1-2.1">
+            <p id="section-6.1-2.1.1">The resumption PSK <span class="bcp14">MUST</span> only be used with the same cipher suite from which it was derived, or with a cipher suite that provides stronger security guarantees.<a href="#section-6.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-6.1-2.2">
+            <p id="section-6.1-2.2.1">Implementations <span class="bcp14">MUST</span> maintain a mapping between each resumption PSK and its originating cipher suite to enforce this requirement.<a href="#section-6.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-6.1-2.3">
+            <p id="section-6.1-2.3.1">If a resumption PSK is offered with a cipher suite that provides weaker security, the Responder <span class="bcp14">MUST</span> reject the ongoing EDHOC session.<a href="#section-6.1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+</section>
+</div>
+<div id="privacy-considerations-for-resumption">
+<section id="section-6.2">
+        <h3 id="name-privacy-considerations-for-">
+<a href="#section-6.2" class="section-number selfRef">6.2. </a><a href="#name-privacy-considerations-for-" class="section-name selfRef">Privacy Considerations for Resumption</a>
+        </h3>
+<p id="section-6.2-1">When using resumption PSKs:<a href="#section-6.2-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.2-2.1">
+            <p id="section-6.2-2.1.1">ID_CRED_PSK is not exposed to passive attackers, and under normal operation it is not reused. Reuse of the same ID_CRED_PSK can occur due to transmission errors or when a peer loses its stored resumption key. An active attacker can obtain the value of ID_CRED_PSK and force its reuse. This aligns with the security goals of EDHOC-PSK, which are to provide identity protection against passive attackers, but not against active attackers.<a href="#section-6.2-2.1.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+<div id="security-considerations-for-resumption">
+<section id="section-6.3">
+        <h3 id="name-security-considerations-for">
+<a href="#section-6.3" class="section-number selfRef">6.3. </a><a href="#name-security-considerations-for" class="section-name selfRef">Security Considerations for Resumption</a>
+        </h3>
+<ul class="normal">
+<li class="normal" id="section-6.3-1.1">
+            <p id="section-6.3-1.1.1">Resumption PSKs <span class="bcp14">MUST NOT</span> be used for purposes other than EDHOC session resumption.<a href="#section-6.3-1.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-6.3-1.2">
+            <p id="section-6.3-1.2.1">Resumption PSKs <span class="bcp14">MUST</span> be securely stored with the same level of protection as the session keys.<a href="#section-6.3-1.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-6.3-1.3">
+            <p id="section-6.3-1.3.1">Parties <span class="bcp14">SHOULD</span> prevent excessive reuse of the same resumption PSK.<a href="#section-6.3-1.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+</section>
+</div>
+<div id="edhoc-psk-and-extensible-authentication-protocol-eap">
+<section id="section-7">
+      <h2 id="name-edhoc-psk-and-extensible-au">
+<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-edhoc-psk-and-extensible-au" class="section-name selfRef">EDHOC-PSK and Extensible Authentication Protocol (EAP)</a>
+      </h2>
+<p id="section-7-1">EDHOC with PSK authentication has several important use cases within the Extensible Authentication Protocol (EAP).<a href="#section-7-1" class="pilcrow">¶</a></p>
+<p id="section-7-2">One use case is the resumption of a session established with the EAP method EAP-EDHOC <span>[<a href="#I-D.ietf-emu-eap-edhoc" class="cite xref">I-D.ietf-emu-eap-edhoc</a>]</span>, regardless of the EDHOC-based authentication method originally used in that session. This is similar to the resumption mechanism in EAP-TLS 1.3 <span>[<a href="#RFC9190" class="cite xref">RFC9190</a>]</span>. Resumption reduces the number of round trips and allows the EAP-EDHOC server to avoid database lookups that might be required during an initial handshake. If the server accepts resumption, the resumed session is considered authenticated and securely bound to the prior authentication or resumption.<a href="#section-7-2" class="pilcrow">¶</a></p>
+<p id="section-7-3">The use of resumption with EAP-EDHOC is optional for the peer, but it is <span class="bcp14">RECOMMENDED</span> whenever a valid rPSK is available. On the server side, resumption acceptance is also optional, but it is <span class="bcp14">RECOMMENDED</span> if the rPSK remains valid. The server may, however, require a new initial handshake by refusing resumption. It is further <span class="bcp14">RECOMMENDED</span> to use Network Access Identifiers (NAIs) with the same realm in the identity response during both the full handshake and resumption. For example, the NAI @realm can safely be reused since it does not expose information that links a user’s resumption attempt with the original full handshake.<a href="#section-7-3" class="pilcrow">¶</a></p>
+<p id="section-7-4">EAP-EDHOC-PSK also provides a significant improvement over EAP-PSK <span>[<a href="#RFC4764" class="cite xref">RFC4764</a>]</span>, which lacks support for identity protection, cryptographic agility, and ephemeral key exchange, now considered essential for meeting current security requirements. Without perfect forward secrecy, compromise of the PSK enables a passive attacker to decrypt both past and future sessions. Note that PSK authentication is not allowed in EAP-TLS <span>[<a href="#RFC9190" class="cite xref">RFC9190</a>]</span>.<a href="#section-7-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="edhoc-psk-and-oscore">
+<section id="section-8">
+      <h2 id="name-edhoc-psk-and-oscore">
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-edhoc-psk-and-oscore" class="section-name selfRef">EDHOC-PSK and OSCORE</a>
+      </h2>
+<p id="section-8-1">Before sending message_3 the Initiator can derive PRK_out and create an OSCORE-protected request. The request payload <span class="bcp14">MAY</span> convey both an EDHOC message_3 and OSCORE-protected data combined together, as described in <span><a href="https://rfc-editor.org/rfc/rfc9668#section-3" class="relref">Section 3</a> of [<a href="#RFC9668" class="cite xref">RFC9668</a>]</span>.<a href="#section-8-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="security-considerations">
+<section id="section-9">
+      <h2 id="name-security-considerations">
+<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
+      </h2>
+<p id="section-9-1">The EDHOC-PSK authentication method introduces deviations from the initial specification of EDHOC <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>. This section analyzes the security implications of these changes and discusses the security properties of EDHOC authenticated with PSK.<a href="#section-9-1" class="pilcrow">¶</a></p>
+<div id="identity-protection">
+<section id="section-9.1">
+        <h3 id="name-identity-protection">
+<a href="#section-9.1" class="section-number selfRef">9.1. </a><a href="#name-identity-protection" class="section-name selfRef">Identity Protection</a>
+        </h3>
+<p id="section-9.1-1">In EDHOC-PSK, the identifier ID_CRED_PSK in message_3 is transported inside an AEAD-protected ciphertext derived from the ephemeral shared secret G_XY. This provides identity protection of both the Initiator and Responder against passive attackers.  This contrasts with the asymmetric authentication methods in <span><a href="https://rfc-editor.org/rfc/rfc9528#section-9.1" class="relref">Section 9.1</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>, which protect the Initiator’s identity against active attackers and the Responder’s identity against passive ones.<a href="#section-9.1-1" class="pilcrow">¶</a></p>
+<p id="section-9.1-2">However, EDHOC-PSK does not satisfy the stronger identity protection notion defined by Cottier and Pointcheval <span>[<a href="#Cottier-Pointcheval" class="cite xref">Cottier-Pointcheval</a>]</span>, which requires security against an active Man-in-the-Middle (MitM) attacker. Under this stronger notion, an active attacker must not only be prevented from learning the identity but also from forcing a specific identity to be used in a way that allows them to later distinguish between the legitimate owner of a secret (the PSK) and any other user. Because message_3 is protected using AEAD, any modification by an attacker causes authentication failure and the protocol run aborts. Therefore, the attacker cannot learn the identity by observing successful decryptions of modified ciphertexts. However, if an implementation exposes different externally observable behavior depending on the reason for aborting (e.g., distinguishing between AEAD failure and unknown credential referenced), an active attacker may be able to test candidate credential identifiers by observing which error is returned.<a href="#section-9.1-2" class="pilcrow">¶</a></p>
+<p id="section-9.1-3">To prevent such leakage, implementations of EDHOC-PSK:<a href="#section-9.1-3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-9.1-4.1">
+            <p id="section-9.1-4.1.1"><span class="bcp14">MUST</span> treat all failures related to message_3 processing (including AEAD verification failure, unknown credential identifiers, or malformed inputs) as indistinguishable from the perspective of an external observer;<a href="#section-9.1-4.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-9.1-4.2">
+            <p id="section-9.1-4.2.1"><span class="bcp14">MUST</span> ensure that processing of message_3 is performed in a manner that does not introduce secret-dependent timing differences.<a href="#section-9.1-4.2.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-9.1-5">When these requirements are met, an active attacker observing aborted sessions learns no information about the identity associated with a given PSK.<a href="#section-9.1-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="mutual-authentication">
+<section id="section-9.2">
+        <h3 id="name-mutual-authentication">
+<a href="#section-9.2" class="section-number selfRef">9.2. </a><a href="#name-mutual-authentication" class="section-name selfRef">Mutual Authentication</a>
+        </h3>
+<p id="section-9.2-1">EDHOC-PSK provides mutual authentication and explicit key confirmation through an additional message that demonstrates possession of the PSK. This may be message_4 or an application message (e.g., an OSCORE message) protected with a key derived from EDHOC.<a href="#section-9.2-1" class="pilcrow">¶</a></p>
+<p id="section-9.2-2">To mitigate reflection or Selfie attacks, the identities in CRED_I and CRED_R <span class="bcp14">MUST</span> be distinct.<a href="#section-9.2-2" class="pilcrow">¶</a></p>
+<p id="section-9.2-3">EDHOC-PSK does not provide Key Compromise Impersonation (KCI) protection. Compromise of the long-term PSK enables an attacker to impersonate either the Initiator or the Responder to the other party. While compromise of the ephemeral Diffie-Hellman secret only affects the specific session in which it is used, compromise of the PSK allows full active impersonation in all future sessions that rely on the compromised key.<a href="#section-9.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="protection-of-external-authorization-data-ead">
+<section id="section-9.3">
+        <h3 id="name-protection-of-external-auth">
+<a href="#section-9.3" class="section-number selfRef">9.3. </a><a href="#name-protection-of-external-auth" class="section-name selfRef">Protection of External Authorization Data (EAD)</a>
+        </h3>
+<p id="section-9.3-1">As in <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>, EDHOC-PSK ensures the confidentiality and integrity of External Authorization Data (EAD). The security guarantees for EAD fields remain unchanged from the original EDHOC specification.<a href="#section-9.3-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="cryptographic-strength">
+<section id="section-9.4">
+        <h3 id="name-cryptographic-strength">
+<a href="#section-9.4" class="section-number selfRef">9.4. </a><a href="#name-cryptographic-strength" class="section-name selfRef">Cryptographic strength</a>
+        </h3>
+<p id="section-9.4-1">EDHOC-PSK provides a minimum of 64-bit security against online brute force attacks and, provided the PSK has sufficient entropy, a minimum of 128-bit security against offline brute force attacks. If the PSK entropy is lower, the effective offline security is limited by the entropy of the PSK. To break 64-bit security against online brute force, an attacker would on average have to send 4.3 billion messages per second for 68 years, which is infeasible in constrained IoT radio technologies. A successful forgery of the AEAD authentication tag in EDHOC-PSK breaks the security of all future application data derived from the session, while a forgery in the subsequent application protocol (e.g., OSCORE <span>[<a href="#RFC8613" class="cite xref">RFC8613</a>]</span>) typically only breaks the security of the forged packet.<a href="#section-9.4-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="downgrade-protection">
+<section id="section-9.5">
+        <h3 id="name-downgrade-protection">
+<a href="#section-9.5" class="section-number selfRef">9.5. </a><a href="#name-downgrade-protection" class="section-name selfRef">Downgrade Protection</a>
+        </h3>
+<p id="section-9.5-1">Following <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>, EDHOC-PSK must support cryptographic agility, including modularity and negotiation of preferred cryptographic primitives. In message 1, the Initiator sends an ordered list of supported cipher suites (SUITES_I). The Responder verifies that the suite selected by the Initiator is the most preferred option in SUITES_I that is mutually supported. If this condition is not met, the Responder <span class="bcp14">MUST</span> abort the session.<a href="#section-9.5-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="post-quantum-considerations">
+<section id="section-9.6">
+        <h3 id="name-post-quantum-considerations">
+<a href="#section-9.6" class="section-number selfRef">9.6. </a><a href="#name-post-quantum-considerations" class="section-name selfRef">Post Quantum Considerations</a>
+        </h3>
+<p id="section-9.6-1">Advances in quantum computing suggest that a Cryptographically Relevant Quantum Computer (CRQC) may eventually be realized. Such a machine would render many asymmetric algorithms, including Elliptic Curve Diffie-Hellman (ECDH), insecure.<a href="#section-9.6-1" class="pilcrow">¶</a></p>
+<p id="section-9.6-2">EDHOC-PSK derives authentication and session keys primarily from a symmetric PSK, which provides quantum resistance even when combined with ECDHE. However, if a CRQC is realized, the ECDHE contribution degenerates to providing only randomness. In that case, EDHOC-PSK with ECDHE offers neither identity protection nor Perfect Forward Secrecy (PFS) against quantum adversaries. Moreover, if the PSK is compromised, a passive quantum attacker could decrypt both past and future sessions.<a href="#section-9.6-2" class="pilcrow">¶</a></p>
+<p id="section-9.6-3">By contrast, combining EDHOC-PSK with a quantum-resistant Key Encapsulation Mechanism (KEM), such as ML-KEM, ensures both identity protection and PFS even against quantum-capable attackers. Future EDHOC cipher suites incorporating ML-KEM are expected to be registered; see <span>[<a href="#I-D.spm-lake-pqsuites" class="cite xref">I-D.spm-lake-pqsuites</a>]</span>.<a href="#section-9.6-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="confidentiality">
+<section id="section-9.7">
+        <h3 id="name-confidentiality">
+<a href="#section-9.7" class="section-number selfRef">9.7. </a><a href="#name-confidentiality" class="section-name selfRef">Confidentiality</a>
+        </h3>
+<p id="section-9.7-1">The primary security goal of EDHOC-PSK is to establish a shared secret known only to the authenticated Initiator and Responder. The protocol ensures key indistinguishability by relying on the security of the PSK and the ephemeral key shares, making it computationally infeasible for an adversary to distinguish the true session secret from a random value.<a href="#section-9.7-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="independence-of-session-keys">
+<section id="section-9.8">
+        <h3 id="name-independence-of-session-key">
+<a href="#section-9.8" class="section-number selfRef">9.8. </a><a href="#name-independence-of-session-key" class="section-name selfRef">Independence of Session Keys</a>
+        </h3>
+<p id="section-9.8-1">NIST requires that an ephemeral private key be used in only one key-establishment transaction (<span>[<a href="#SP-800-56A" class="cite xref">SP-800-56A</a>]</span>, Section 5.6.3.3). This requirement preserves session key independence and forward secrecy, and EDHOC-PSK complies with it. By deriving the final shared secret from a fresh, session-specific ephemeral secret (G_XY), the protocol ensures that even if the PSK is compromised, an attacker is unable to decrypt the past sessions. Similarly, if a session secret were to be compromised, future session secrets remain protected by fresh ephemeral keys.<a href="#section-9.8-1" class="pilcrow">¶</a></p>
+<p id="section-9.8-2">In other protocols, reuse of ephemeral keys, especially when combined with missing public key validation, has led to severe vulnerabilities, enabling attackers to recover “ephemeral” private keys and compromise both past and future sessions between two legitimate parties. Assuming breach and minimizing the impact of compromise are fundamental principles of zero-trust security.<a href="#section-9.8-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="unified-approach-and-recommendations">
+<section id="section-9.9">
+        <h3 id="name-unified-approach-and-recomm">
+<a href="#section-9.9" class="section-number selfRef">9.9. </a><a href="#name-unified-approach-and-recomm" class="section-name selfRef">Unified Approach and Recommendations</a>
+        </h3>
+<p id="section-9.9-1">For use cases where application data is transmitted, it can be sent together with message_3, maintaining efficiency. In applications such as EAP-EDHOC <span>[<a href="#I-D.ietf-emu-eap-edhoc" class="cite xref">I-D.ietf-emu-eap-edhoc</a>]</span>, where no application data is exchanged between Initiator and Responder, message_4 is mandatory. In such cases, EDHOC-PSK does not increase the total number of messages. Other implementations may replace message_4 with an OSCORE-protected message. In this case, the following requirement applies: The Initiator <span class="bcp14">SHALL NOT</span> persistently store PRK_out or derived application keys until successfully verifying message_4 or a message protected with an exported application key (e.g., an OSCORE message). This ensures that key material is stored only after its authenticity is confirmed, thereby strengthening privacy by preventing premature storage of potentially compromised keys. Finally, the order of authentication (i.e., whether the Initiator or the Responder authenticates first) is not relevant in EDHOC-PSK. While this ordering affects privacy properties in the asymmetric methods of <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>, it has no significant impact in EDHOC-PSK.<a href="#section-9.9-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="iana-considerations">
+<section id="section-10">
+      <h2 id="name-iana-considerations">
+<a href="#section-10" class="section-number selfRef">10. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+      </h2>
+<p id="section-10-1">This document requires the following IANA actions.<a href="#section-10-1" class="pilcrow">¶</a></p>
+<div id="edhoc-method-type-registry">
+<section id="section-10.1">
+        <h3 id="name-edhoc-method-type-registry">
+<a href="#section-10.1" class="section-number selfRef">10.1. </a><a href="#name-edhoc-method-type-registry" class="section-name selfRef">EDHOC Method Type Registry</a>
+        </h3>
+<p id="section-10.1-1">IANA is requested to register the following entry in the "EDHOC Method Type" registry under the group name "Ephemeral Diffie-Hellman Over COSE (EDHOC)".<a href="#section-10.1-1" class="pilcrow">¶</a></p>
+<span id="name-addition-to-the-edhoc-metho"></span><div id="tab-method-psk">
+<table class="center" id="table-1">
+          <caption>
+<a href="#table-1" class="selfRef">Table 1</a>:
+<a href="#name-addition-to-the-edhoc-metho" class="selfRef">Addition to the EDHOC Method Type Registry.</a>
+          </caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">Value</th>
+              <th class="text-left" rowspan="1" colspan="1">Initiator Authentication Key</th>
+              <th class="text-left" rowspan="1" colspan="1">Responder Authentication Key</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">TBD4</td>
+              <td class="text-left" rowspan="1" colspan="1">PSK</td>
+              <td class="text-left" rowspan="1" colspan="1">PSK</td>
+            </tr>
+          </tbody>
+        </table>
+</div>
+<p id="section-10.1-3">NOTE: Suggested value: TBD4 = 4.
+RFC Editor: Remove this note.<a href="#section-10.1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="edhoc-exporter-label-registry">
+<section id="section-10.2">
+        <h3 id="name-edhoc-exporter-label-regist">
+<a href="#section-10.2" class="section-number selfRef">10.2. </a><a href="#name-edhoc-exporter-label-regist" class="section-name selfRef">EDHOC Exporter Label Registry</a>
+        </h3>
+<p id="section-10.2-1">IANA is requested to register the following entry in the "EDHOC Exporter Label" registry under the group name "Ephemeral Diffie-Hellman Over COSE (EDHOC)".<a href="#section-10.2-1" class="pilcrow">¶</a></p>
+<span id="name-additions-to-the-edhoc-expo"></span><div id="tab-exporter-psk">
+<table class="center" id="table-2">
+          <caption>
+<a href="#table-2" class="selfRef">Table 2</a>:
+<a href="#name-additions-to-the-edhoc-expo" class="selfRef">Additions to the EDHOC Exporter Label Registry.</a>
+          </caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">Label</th>
+              <th class="text-left" rowspan="1" colspan="1">Description</th>
+              <th class="text-left" rowspan="1" colspan="1">Change Controller</th>
+              <th class="text-left" rowspan="1" colspan="1">Reference</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">TBD2</td>
+              <td class="text-left" rowspan="1" colspan="1">Resumption PSK</td>
+              <td class="text-left" rowspan="1" colspan="1">IETF</td>
+              <td class="text-left" rowspan="1" colspan="1">Section 7</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">TBD3</td>
+              <td class="text-left" rowspan="1" colspan="1">Resumption kid</td>
+              <td class="text-left" rowspan="1" colspan="1">IETF</td>
+              <td class="text-left" rowspan="1" colspan="1">Section 7</td>
+            </tr>
+          </tbody>
+        </table>
+</div>
+<p id="section-10.2-3">NOTE: Suggested values: TBD2 = 2, TBD3 = 3.
+RFC Editor: Remove this note.<a href="#section-10.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="sec-combined-references">
+<section id="section-11">
+      <h2 id="name-references">
+<a href="#section-11" class="section-number selfRef">11. </a><a href="#name-references" class="section-name selfRef">References</a>
+      </h2>
+<div id="sec-normative-references">
+<section id="section-11.1">
+        <h3 id="name-normative-references">
+<a href="#section-11.1" class="section-number selfRef">11.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+        </h3>
+<dl class="references">
+<dt id="Cottier-Pointcheval">[Cottier-Pointcheval]</dt>
+        <dd>
+<span class="refAuthor">Cottier, B.</span> and <span class="refAuthor">D. Pointcheval</span>, <span class="refTitle">"Security Analysis of Improved EDHOC Protocol"</span>, <span class="seriesInfo">FPS International Symposium on Foundations and Practice of Security</span>, <time datetime="2022-12" class="refDate">December 2022</time>, <span>&lt;<a href="https://doi.org/10.1007/978-3-031-30122-3_1">https://doi.org/10.1007/978-3-031-30122-3_1</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="I-D.ietf-emu-eap-edhoc">[I-D.ietf-emu-eap-edhoc]</dt>
+        <dd>
+<span class="refAuthor">Garcia-Carrillo, D.</span>, <span class="refAuthor">Marin-Lopez, R.</span>, <span class="refAuthor">Selander, G.</span>, <span class="refAuthor">Mattsson, J. P.</span>, and <span class="refAuthor">F. Lopez-Gomez</span>, <span class="refTitle">"Using the Extensible Authentication Protocol (EAP) with Ephemeral Diffie-Hellman over COSE (EDHOC)"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-emu-eap-edhoc-07</span>, <time datetime="2026-01-29" class="refDate">29 January 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-emu-eap-edhoc-07">https://datatracker.ietf.org/doc/html/draft-ietf-emu-eap-edhoc-07</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="I-D.spm-lake-pqsuites">[I-D.spm-lake-pqsuites]</dt>
+        <dd>
+<span class="refAuthor">Selander, G.</span> and <span class="refAuthor">J. P. Mattsson</span>, <span class="refTitle">"Quantum-Resistant Cipher Suites for EDHOC"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-spm-lake-pqsuites-01</span>, <time datetime="2025-10-20" class="refDate">20 October 2025</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-spm-lake-pqsuites-01">https://datatracker.ietf.org/doc/html/draft-spm-lake-pqsuites-01</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC2119">[RFC2119]</dt>
+        <dd>
+<span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc2119">https://www.rfc-editor.org/rfc/rfc2119</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8174">[RFC8174]</dt>
+        <dd>
+<span class="refAuthor">Leiba, B.</span>, <span class="refTitle">"Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 8174</span>, <span class="seriesInfo">DOI 10.17487/RFC8174</span>, <time datetime="2017-05" class="refDate">May 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8174">https://www.rfc-editor.org/rfc/rfc8174</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8392">[RFC8392]</dt>
+        <dd>
+<span class="refAuthor">Jones, M.</span>, <span class="refAuthor">Wahlstroem, E.</span>, <span class="refAuthor">Erdtman, S.</span>, and <span class="refAuthor">H. Tschofenig</span>, <span class="refTitle">"CBOR Web Token (CWT)"</span>, <span class="seriesInfo">RFC 8392</span>, <span class="seriesInfo">DOI 10.17487/RFC8392</span>, <time datetime="2018-05" class="refDate">May 2018</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8392">https://www.rfc-editor.org/rfc/rfc8392</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8610">[RFC8610]</dt>
+        <dd>
+<span class="refAuthor">Birkholz, H.</span>, <span class="refAuthor">Vigano, C.</span>, and <span class="refAuthor">C. Bormann</span>, <span class="refTitle">"Concise Data Definition Language (CDDL): A Notational Convention to Express Concise Binary Object Representation (CBOR) and JSON Data Structures"</span>, <span class="seriesInfo">RFC 8610</span>, <span class="seriesInfo">DOI 10.17487/RFC8610</span>, <time datetime="2019-06" class="refDate">June 2019</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8610">https://www.rfc-editor.org/rfc/rfc8610</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8613">[RFC8613]</dt>
+        <dd>
+<span class="refAuthor">Selander, G.</span>, <span class="refAuthor">Mattsson, J.</span>, <span class="refAuthor">Palombini, F.</span>, and <span class="refAuthor">L. Seitz</span>, <span class="refTitle">"Object Security for Constrained RESTful Environments (OSCORE)"</span>, <span class="seriesInfo">RFC 8613</span>, <span class="seriesInfo">DOI 10.17487/RFC8613</span>, <time datetime="2019-07" class="refDate">July 2019</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8613">https://www.rfc-editor.org/rfc/rfc8613</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8742">[RFC8742]</dt>
+        <dd>
+<span class="refAuthor">Bormann, C.</span>, <span class="refTitle">"Concise Binary Object Representation (CBOR) Sequences"</span>, <span class="seriesInfo">RFC 8742</span>, <span class="seriesInfo">DOI 10.17487/RFC8742</span>, <time datetime="2020-02" class="refDate">February 2020</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8742">https://www.rfc-editor.org/rfc/rfc8742</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8949">[RFC8949]</dt>
+        <dd>
+<span class="refAuthor">Bormann, C.</span> and <span class="refAuthor">P. Hoffman</span>, <span class="refTitle">"Concise Binary Object Representation (CBOR)"</span>, <span class="seriesInfo">STD 94</span>, <span class="seriesInfo">RFC 8949</span>, <span class="seriesInfo">DOI 10.17487/RFC8949</span>, <time datetime="2020-12" class="refDate">December 2020</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8949">https://www.rfc-editor.org/rfc/rfc8949</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9052">[RFC9052]</dt>
+        <dd>
+<span class="refAuthor">Schaad, J.</span>, <span class="refTitle">"CBOR Object Signing and Encryption (COSE): Structures and Process"</span>, <span class="seriesInfo">STD 96</span>, <span class="seriesInfo">RFC 9052</span>, <span class="seriesInfo">DOI 10.17487/RFC9052</span>, <time datetime="2022-08" class="refDate">August 2022</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9052">https://www.rfc-editor.org/rfc/rfc9052</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9053">[RFC9053]</dt>
+        <dd>
+<span class="refAuthor">Schaad, J.</span>, <span class="refTitle">"CBOR Object Signing and Encryption (COSE): Initial Algorithms"</span>, <span class="seriesInfo">RFC 9053</span>, <span class="seriesInfo">DOI 10.17487/RFC9053</span>, <time datetime="2022-08" class="refDate">August 2022</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9053">https://www.rfc-editor.org/rfc/rfc9053</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9528">[RFC9528]</dt>
+        <dd>
+<span class="refAuthor">Selander, G.</span>, <span class="refAuthor">Preuß Mattsson, J.</span>, and <span class="refAuthor">F. Palombini</span>, <span class="refTitle">"Ephemeral Diffie-Hellman Over COSE (EDHOC)"</span>, <span class="seriesInfo">RFC 9528</span>, <span class="seriesInfo">DOI 10.17487/RFC9528</span>, <time datetime="2024-03" class="refDate">March 2024</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9528">https://www.rfc-editor.org/rfc/rfc9528</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9668">[RFC9668]</dt>
+        <dd>
+<span class="refAuthor">Palombini, F.</span>, <span class="refAuthor">Tiloca, M.</span>, <span class="refAuthor">Höglund, R.</span>, <span class="refAuthor">Hristozov, S.</span>, and <span class="refAuthor">G. Selander</span>, <span class="refTitle">"Using Ephemeral Diffie-Hellman Over COSE (EDHOC) with the Constrained Application Protocol (CoAP) and Object Security for Constrained RESTful Environments (OSCORE)"</span>, <span class="seriesInfo">RFC 9668</span>, <span class="seriesInfo">DOI 10.17487/RFC9668</span>, <time datetime="2024-11" class="refDate">November 2024</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9668">https://www.rfc-editor.org/rfc/rfc9668</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="SP-800-56A">[SP-800-56A]</dt>
+      <dd>
+<span class="refAuthor">Barker, E.</span>, <span class="refAuthor">Chen, L.</span>, <span class="refAuthor">Roginsky, A.</span>, <span class="refAuthor">Vassilev, A.</span>, and <span class="refAuthor">R. Davis</span>, <span class="refTitle">"Recommendation for Pair-Wise Key-Establishment Schemes Using Discrete Logarithm Cryptography"</span>, <span class="seriesInfo">NIST Special Publication 800-56A Revision 3</span>, <time datetime="2018-04" class="refDate">April 2018</time>, <span>&lt;<a href="https://doi.org/10.6028/NIST.SP.800-56Ar3">https://doi.org/10.6028/NIST.SP.800-56Ar3</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="sec-informative-references">
+<section id="section-11.2">
+        <h3 id="name-informative-references">
+<a href="#section-11.2" class="section-number selfRef">11.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
+        </h3>
+<dl class="references">
+<dt id="RFC4764">[RFC4764]</dt>
+        <dd>
+<span class="refAuthor">Bersani, F.</span> and <span class="refAuthor">H. Tschofenig</span>, <span class="refTitle">"The EAP-PSK Protocol: A Pre-Shared Key Extensible Authentication Protocol (EAP) Method"</span>, <span class="seriesInfo">RFC 4764</span>, <span class="seriesInfo">DOI 10.17487/RFC4764</span>, <time datetime="2007-01" class="refDate">January 2007</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc4764">https://www.rfc-editor.org/rfc/rfc4764</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9190">[RFC9190]</dt>
+      <dd>
+<span class="refAuthor">Preuß Mattsson, J.</span> and <span class="refAuthor">M. Sethi</span>, <span class="refTitle">"EAP-TLS 1.3: Using the Extensible Authentication Protocol with TLS 1.3"</span>, <span class="seriesInfo">RFC 9190</span>, <span class="seriesInfo">DOI 10.17487/RFC9190</span>, <time datetime="2022-02" class="refDate">February 2022</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9190">https://www.rfc-editor.org/rfc/rfc9190</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
+</section>
+</div>
+<div id="CDDL">
+<section id="appendix-A">
+      <h2 id="name-cddl-definitions">
+<a href="#appendix-A" class="section-number selfRef">Appendix A. </a><a href="#name-cddl-definitions" class="section-name selfRef">CDDL Definitions</a>
+      </h2>
+<p id="appendix-A-1">This section compiles the CDDL definitions for convenience, incorporating errata filed against <span>[<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+<div class="breakable lang-CDDL sourcecode" id="appendix-A-2">
+<pre>
+suites = [ 2* int ] / int
+
+ead = (
+  ead_label : int,
+  ? ead_value : bstr,
+)
+
+EAD_1 = (1* ead)
+EAD_2 = (1* ead)
+EAD_3 = (1* ead)
+EAD_4 = (1* ead)
+
+message_1 = (
+  METHOD : int,
+  SUITES_I : suites,
+  G_X : bstr,
+  C_I : bstr / -24..23,
+  ? EAD_1,
+)
+
+message_2 = (
+  G_Y_CIPHERTEXT_2 : bstr,
+)
+
+PLAINTEXT_2A = (
+  C_R : bstr / -24..23,
+  ? EAD_2,
+)
+
+message_3 = (
+  CIPHERTEXT_3 : bstr,
+)
+
+PLAINTEXT_3A = (
+  ID_CRED_PSK : header_map / bstr / -24..23,
+  CIPHERTEXT_3B : bstr,
+)
+
+PLAINTEXT_3B = (
+  ? EAD_3,
+)
+
+message_4 = (
+  CIPHERTEXT_4 : bstr,
+)
+
+PLAINTEXT_4 = (
+  ? EAD_4,
+)
+
+error = (
+  ERR_CODE : int,
+  ERR_INFO : any,
+)
+
+info = (
+  info_label : int,
+  context : bstr,
+  length : uint,
+)
+</pre><a href="#appendix-A-2" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="test-vectors">
+<section id="appendix-B">
+      <h2 id="name-test-vectors">
+<a href="#appendix-B" class="section-number selfRef">Appendix B. </a><a href="#name-test-vectors" class="section-name selfRef">Test Vectors</a>
+      </h2>
+<div id="message1">
+<section id="appendix-B.1">
+        <h3 id="name-message_1">
+<a href="#appendix-B.1" class="section-number selfRef">B.1. </a><a href="#name-message_1" class="section-name selfRef">message_1</a>
+        </h3>
+<p id="appendix-B.1-1">Both endpoints are authenticated with Pre-Shared Keys (METHOD = 4)<a href="#appendix-B.1-1" class="pilcrow">¶</a></p>
+<p id="appendix-B.1-2">NOTE: Assuming TBD4 = 4, to be confirmed by IANA.
+RFC Editor: Remove this note.<a href="#appendix-B.1-2" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.1-3">
+<pre>
+METHOD (CBOR Data Item) (1 byte)
+04
+</pre><a href="#appendix-B.1-3" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.1-4">The initiator selects cipher suite 02. A single cipher suite is encoded as an int:<a href="#appendix-B.1-4" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.1-5">
+<pre>
+SUITES_I (CBOR Data Item) (1 byte)
+02
+</pre><a href="#appendix-B.1-5" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.1-6">The Initiator creates an ephemeral key pair for use with the EDHOC key exchange algorithm:<a href="#appendix-B.1-6" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.1-7">
+<pre>
+Initiator's ephemeral private key
+X (Raw Value) (32 bytes)
+09 97 2D FE F1 EA AB 92 6E C9 6E 80 05 FE D2 9F
+70 FF BF 4E 36 1C 3A 06 1A 7A CD B5 17 0C 10 E5
+</pre><a href="#appendix-B.1-7" class="pilcrow">¶</a>
+</div>
+<div class="alignLeft art-text artwork" id="appendix-B.1-8">
+<pre>
+Initiator's ephemeral public key
+G_X (Raw Value) (32 bytes)
+7E C6 81 02 94 06 02 AA B5 48 53 9B F4 2A 35 99
+2D 95 72 49 EB 7F 18 88 40 6D 17 8A 04 C9 12 DB
+</pre><a href="#appendix-B.1-8" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.1-9">The Initiator selects its connection identifier C_I to be the byte string 0xA, which is encoded as 0xA since it is represented by the 1-byte CBOR int 10:<a href="#appendix-B.1-9" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.1-10">
+<pre>
+Connection identifier chosen by the Initiator
+C_I (CBOR Data Item) (1 byte)
+0A
+</pre><a href="#appendix-B.1-10" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.1-11">No external authorization data<a href="#appendix-B.1-11" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.1-12">
+<pre>
+EAD_1 (CBOR Sequence) (0 bytes)
+</pre><a href="#appendix-B.1-12" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.1-13">The Initiator constructs message_1:<a href="#appendix-B.1-13" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.1-14">
+<pre>
+message_1 (CBOR Sequence) (37 bytes)
+04 02 58 20 7E C6 81 02 94 06 02 AA B5 48 53 9B
+F4 2A 35 99 2D 95 72 49 EB 7F 18 88 40 6D 17 8A
+04 C9 12 DB 0A
+</pre><a href="#appendix-B.1-14" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="message2">
+<section id="appendix-B.2">
+        <h3 id="name-message_2">
+<a href="#appendix-B.2" class="section-number selfRef">B.2. </a><a href="#name-message_2" class="section-name selfRef">message_2</a>
+        </h3>
+<p id="appendix-B.2-1">The Responder supports the most preferred and selected cipher suite 02, so SUITES_I is acceptable.<a href="#appendix-B.2-1" class="pilcrow">¶</a></p>
+<p id="appendix-B.2-2">The Responder creates an ephemeral key pair for use with the EDHOC key exchange algorithm:<a href="#appendix-B.2-2" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.2-3">
+<pre>
+Responder's ephemeral private key
+Y (Raw Value) (32 bytes)
+1E 1C 8F 2D F1 AA 71 10 B3 9F 33 BA 5E A8 DC CF
+31 41 1E B3 3D 4F 9A 09 4C F6 51 92 D3 35 A7 A3
+</pre><a href="#appendix-B.2-3" class="pilcrow">¶</a>
+</div>
+<div class="alignLeft art-text artwork" id="appendix-B.2-4">
+<pre>
+Responder's ephemeral public key
+G_Y (Raw Value) (32 bytes)
+ED 15 6A 62 43 E0 AF EC 9E FB AA BC E8 42 9D 5A
+D5 E4 E1 C4 32 F7 6A 6E DE 8F 79 24 7B B9 7D 83
+</pre><a href="#appendix-B.2-4" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.2-5">The Responder selects its connection identifier C_R to be the byte string 0x05, which is encoded as 0x05 since it is represented by the 1-byte CBOR int 05:<a href="#appendix-B.2-5" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.2-6">
+<pre>
+Connection identifier chosen by the Responder
+C_R (CBOR Data Item) (1 byte)
+05
+</pre><a href="#appendix-B.2-6" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.2-7">The transcript hash TH_2 is calculated using the EDHOC hash algorithm:
+TH_2 = H( G_Y, H(message_1) ), where H(message_1) is:<a href="#appendix-B.2-7" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.2-8">
+<pre>
+H(message_1) (Raw Value) (32 bytes)
+19 CC 2D 2A 95 7E DD 80 10 90 42 FD E6 CC 20 C2
+4B 6A 34 BC 21 C6 D4 9F EA 89 5D 4C 75 92 34 0E
+</pre><a href="#appendix-B.2-8" class="pilcrow">¶</a>
+</div>
+<div class="alignLeft art-text artwork" id="appendix-B.2-9">
+<pre>
+H(message_1) (CBOR Data Item) (34 bytes)
+58 20 19 CC 2D 2A 95 7E DD 80 10 90 42 FD E6 CC 20
+C2 4B 6A 34 BC 21 C6 D4 9F EA 89 5D 4C 75 92 34 0E
+</pre><a href="#appendix-B.2-9" class="pilcrow">¶</a>
+</div>
+<div class="alignLeft art-text artwork" id="appendix-B.2-10">
+<pre>
+TH_2 (Raw Value) (32 bytes)
+5B 48 34 AE 63 0A 8A 0E D0 B0 C6 F3 66 42 60 4D
+01 64 78 C4 BC 81 87 BB 76 4D D4 0F 2B EE 3D DE
+</pre><a href="#appendix-B.2-10" class="pilcrow">¶</a>
+</div>
+<div class="alignLeft art-text artwork" id="appendix-B.2-11">
+<pre>
+TH_2 (CBOR Data Item) (34 bytes)
+58 20 5B 48 34 AE 63 0A 8A 0E D0 B0 C6 F3 66 42 60
+4D 01 64 78 C4 BC 81 87 BB 76 4D D4 0F 2B EE 3D DE
+</pre><a href="#appendix-B.2-11" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.2-12">PRK_2e is specified in <span><a href="https://rfc-editor.org/rfc/rfc9528#section-4.1.2" class="relref">Section 4.1.2</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>.
+To compute it, the Elliptic Curve Diffie-Hellman (ECDH) shared secret G_XY is needed.
+It is computed from G_X and Y or G_Y and X:<a href="#appendix-B.2-12" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.2-13">
+<pre>
+G_XY (Raw Value) (ECDH shared secret) (32 bytes)
+2F 4A 79 9A 5A B0 C5 67 22 0C B6 72 08 E6 CF 8F
+4C A5 FE 38 5D 1B 11 FD 9A 57 3D 41 60 F3 B0 B2
+</pre><a href="#appendix-B.2-13" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.2-14">Then, PRK_2e is calculated as defined in <span><a href="https://rfc-editor.org/rfc/rfc9528#section-4.1.2" class="relref">Section 4.1.2</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span><a href="#appendix-B.2-14" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.2-15">
+<pre>
+PRK_2e (Raw Value) (32 bytes)
+D0 39 D6 C3 CF 35 EC A0 CD F8 19 E3 25 79 C7 7E
+1F 30 3E FC C4 36 20 50 99 48 A9 FD 47 FB D9 29
+</pre><a href="#appendix-B.2-15" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.2-16">Since the Responder authenticates using PSK, PRK_3e2m = PRK_2e.<a href="#appendix-B.2-16" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.2-17">
+<pre>
+PRK_3e2m (Raw Value) (32 bytes)
+D0 39 D6 C3 CF 35 EC A0 CD F8 19 E3 25 79 C7 7E
+1F 30 3E FC C4 36 20 50 99 48 A9 FD 47 FB D9 29
+</pre><a href="#appendix-B.2-17" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.2-18">No external authorization data:<a href="#appendix-B.2-18" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.2-19">
+<pre>
+EAD_2 (CBOR Sequence) (0 bytes)
+</pre><a href="#appendix-B.2-19" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.2-20">The Responder constructs PLAINTEXT_2A:<a href="#appendix-B.2-20" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.2-21">
+<pre>
+PLAINTEXT_2A (CBOR Sequence) (1 byte)
+05
+</pre><a href="#appendix-B.2-21" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.2-22">The Responder computes KEYSTREAM_2 as defined in <span><a href="https://rfc-editor.org/rfc/rfc9528#section-4.1.2" class="relref">Section 4.1.2</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span><a href="#appendix-B.2-22" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.2-23">
+<pre>
+KEYSTREAM_2A (Raw Value) (1 byte)
+EC
+</pre><a href="#appendix-B.2-23" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.2-24">The Responder calculates CIPHERTEXT_2B as XOR between PLAINTEXT_2A and KEYSTREAM_2:<a href="#appendix-B.2-24" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.2-25">
+<pre>
+CIPHERTEXT_2B (CBOR Sequence) (1 byte)
+E9
+</pre><a href="#appendix-B.2-25" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.2-26">The Responder constructs message_2 as defined in <span><a href="https://rfc-editor.org/rfc/rfc9528#section-5.3.1" class="relref">Section 5.3.1</a> of [<a href="#RFC9528" class="cite xref">RFC9528</a>]</span>:<a href="#appendix-B.2-26" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.2-27">
+<pre>
+message_2 (CBOR Sequence) (35 bytes)
+58 21 ED 15 6A 62 43 E0 AF EC 9E FB AA BC E8 42
+9D 5A D5 E4 E1 C4 32 F7 6A 6E DE 8F 79 24 7B B9
+7D 83 E9
+</pre><a href="#appendix-B.2-27" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="message3">
+<section id="appendix-B.3">
+        <h3 id="name-message_3">
+<a href="#appendix-B.3" class="section-number selfRef">B.3. </a><a href="#name-message_3" class="section-name selfRef">message_3</a>
+        </h3>
+<p id="appendix-B.3-1">The Initiator computes PRK_4e3m, as described in Section 4, using SALT_4e3m and PSK:<a href="#appendix-B.3-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.3-2">
+<pre>
+SALT_4e3m (Raw Value) (32 bytes)
+ED E0 76 12 14 83 19 EB 72 59 52 71 2A 54 2C 20
+97 61 0A 13 9C 4A 14 1C 8E C5 7A 5F 62 E5 E9 DD
+</pre><a href="#appendix-B.3-2" class="pilcrow">¶</a>
+</div>
+<div class="alignLeft art-text artwork" id="appendix-B.3-3">
+<pre>
+PSK (Raw Value) (16 bytes)
+50 93 0F F4 62 A7 7A 35 40 CF 54 63 25 DE A2 14
+</pre><a href="#appendix-B.3-3" class="pilcrow">¶</a>
+</div>
+<div class="alignLeft art-text artwork" id="appendix-B.3-4">
+<pre>
+PRK_4e3m (Raw Value) (32 bytes)
+C6 2C C0 4F 55 D0 08 CF EB 8A 68 1E 84 63 FD DD
+A2 FF 6C A8 4B 9E D6 11 6C 86 5C D8 1E 06 24 60
+</pre><a href="#appendix-B.3-4" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.3-5">The transcript hash TH_3 is calculated using the EDHOC hash algorithm:<a href="#appendix-B.3-5" class="pilcrow">¶</a></p>
+<p id="appendix-B.3-6">TH_3 = H( TH_2, PLAINTEXT_2A )<a href="#appendix-B.3-6" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.3-7">
+<pre>
+TH_3 (Raw Value) (32 bytes)
+38 6A 9D 05 2B 25 59 92 EE E5 FF B5 94 34 7D 32
+74 18 A2 EA 51 83 48 6C 0C 9E 20 42 6E 0B CA 2F
+</pre><a href="#appendix-B.3-7" class="pilcrow">¶</a>
+</div>
+<div class="alignLeft art-text artwork" id="appendix-B.3-8">
+<pre>
+TH_3 (CBOR Data Item) (34 bytes)
+58 20 38 6A 9D 05 2B 25 59 92 EE E5 FF B5 94 34 7D
+32 74 18 A2 EA 51 83 48 6C 0C 9E 20 42 6E 0B CA 2F
+</pre><a href="#appendix-B.3-8" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.3-9">No external authorization data:<a href="#appendix-B.3-9" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.3-10">
+<pre>
+EAD_3 (CBOR Sequence) (0 bytes)
+</pre><a href="#appendix-B.3-10" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.3-11">The Initiator constructs firstly PLAINTEXT_3B as defined in Section 5.3.1.:<a href="#appendix-B.3-11" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.3-12">
+<pre>
+PLAINTEXT_3B (CBOR Sequence) (0 bytes)
+</pre><a href="#appendix-B.3-12" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.3-13">It then computes CIPHERTEXT_3B as defined in Section 5.3.2. It uses ID_CRED_PSK, CRED_I, CRED_R and TH_3 as external_aad:<a href="#appendix-B.3-13" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.3-14">
+<pre>
+ID_CRED_PSK (CBOR Data Item) (1 byte)
+10
+</pre><a href="#appendix-B.3-14" class="pilcrow">¶</a>
+</div>
+<div class="alignLeft art-text artwork" id="appendix-B.3-15">
+<pre>
+CRED_I (Raw Value) (38 bytes)
+A2 02 69 69 6E 69 74 69 61 74 6F 72 08 A1 01 A3
+01 04 02 41 10 20 50 50 93 0F F4 62 A7 7A 35 40
+CF 54 63 25 DE A2 14
+</pre><a href="#appendix-B.3-15" class="pilcrow">¶</a>
+</div>
+<div class="alignLeft art-text artwork" id="appendix-B.3-16">
+<pre>
+CRED_R (Raw Value) (38 bytes)
+A2 02 69 72 65 73 70 6F 6E 64 65 72 08 A1 01 A3
+01 04 02 41 10 20 50 50 93 0F F4 62 A7 7A 35 40
+CF 54 63 25 DE A2 14
+</pre><a href="#appendix-B.3-16" class="pilcrow">¶</a>
+</div>
+<div class="alignLeft art-text artwork" id="appendix-B.3-17">
+<pre>
+TH_3 (Raw Value) (32 bytes)
+38 6A 9D 05 2B 25 59 92 EE E5 FF B5 94 34 7D 32
+74 18 A2 EA 51 83 48 6C 0C 9E 20 42 6E 0B CA 2F
+</pre><a href="#appendix-B.3-17" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.3-18">The Initiator computes K_3 and IV_3<a href="#appendix-B.3-18" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.3-19">
+<pre>
+K_3 (Raw Value) (16 bytes)
+96 6A 57 9C EA 26 CA 3C EB 44 2A C7 27 EA B2 32
+</pre><a href="#appendix-B.3-19" class="pilcrow">¶</a>
+</div>
+<div class="alignLeft art-text artwork" id="appendix-B.3-20">
+<pre>
+IV_3 (Raw Value) (13 bytes)
+5B F1 AD 0E 4F FB 96 76 D7 8D F2 3F 6E
+</pre><a href="#appendix-B.3-20" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.3-21">It then computes CIPHERTEXT_3B:<a href="#appendix-B.3-21" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.3-22">
+<pre>
+CIPHERTEXT_3B (CBOR Sequence) (9 bytes)
+48 7F 34 49 6F 3F 69 C2 88
+</pre><a href="#appendix-B.3-22" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.3-23">The Initiator computes KEYSTREAM_3A as defined in Section 4:<a href="#appendix-B.3-23" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.3-24">
+<pre>
+KEYSTREAM_3A (Raw Value) (10 bytes)
+03 E5 D1 57 1B BC 93 32 47 1B
+</pre><a href="#appendix-B.3-24" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.3-25">It then calculates PLAINTEXT_3A as stated in Section 5.3.2.:<a href="#appendix-B.3-25" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.3-26">
+<pre>
+PLAINTEXT_3A (CBOR Sequence) (10 bytes)
+10 48 7F 34 49 6F 3F 69 C2 88
+</pre><a href="#appendix-B.3-26" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.3-27">It then uses KEYSTREAM_3A to derive CIPHERTEXT_3A:<a href="#appendix-B.3-27" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.3-28">
+<pre>
+CIPHERTEXT_3A (CBOR Sequence) (10 bytes)
+13 AD AE 63 52 D3 AC 5B 85 93
+</pre><a href="#appendix-B.3-28" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.3-29">The Initiator computes message_3 as defined in Section 5.3.2.:<a href="#appendix-B.3-29" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.3-30">
+<pre>
+message_3 (CBOR Sequence) (11 bytes)
+4A 13 AD AE 63 52 D3 AC 5B 85 93
+</pre><a href="#appendix-B.3-30" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.3-31">The transcript hash TH_4 is calculated using the EDHOC hash algorithm:
+TH_4 = H( TH_3, ID_CRED_PSK, ? EAD_3, CRED_I, CRED_R )<a href="#appendix-B.3-31" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.3-32">
+<pre>
+TH_4 (Raw Value) (32 bytes)
+11 48 1B 9A FE F9 5C 67 9A 52 03 82 17 EE DD 0E
+0C E0 8F AA 86 5B DC 82 55 11 CA 6D C3 91 94 13
+</pre><a href="#appendix-B.3-32" class="pilcrow">¶</a>
+</div>
+<div class="alignLeft art-text artwork" id="appendix-B.3-33">
+<pre>
+TH_4 (CBOR Data Item) (34 bytes)
+58 20 11 48 1B 9A FE F9 5C 67 9A 52 03 82 17 EE DD
+0E 0C E0 8F AA 86 5B DC 82 55 11 CA 6D C3 91 94 13
+</pre><a href="#appendix-B.3-33" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="message4">
+<section id="appendix-B.4">
+        <h3 id="name-message_4">
+<a href="#appendix-B.4" class="section-number selfRef">B.4. </a><a href="#name-message_4" class="section-name selfRef">message_4</a>
+        </h3>
+<p id="appendix-B.4-1">No external authorization data:<a href="#appendix-B.4-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.4-2">
+<pre>
+EAD_4 (CBOR Sequence) (0 bytes)
+</pre><a href="#appendix-B.4-2" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.4-3">The Responder constructs PLAINTEXT_4:<a href="#appendix-B.4-3" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.4-4">
+<pre>
+PLAINTEXT_4 (CBOR Sequence) (0 bytes)
+</pre><a href="#appendix-B.4-4" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.4-5">The Responder computes K_4 and IV_4:<a href="#appendix-B.4-5" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.4-6">
+<pre>
+K_4 (Raw Value) (16 bytes)
+BC AB 1D F0 13 8D C0 5C 88 5F D3 71 E9 50 C6 7F
+</pre><a href="#appendix-B.4-6" class="pilcrow">¶</a>
+</div>
+<div class="alignLeft art-text artwork" id="appendix-B.4-7">
+<pre>
+IV_4 (Raw Value) (13 bytes)
+41 11 34 D0 E0 C5 08 D9 5D A7 C3 AC DC
+</pre><a href="#appendix-B.4-7" class="pilcrow">¶</a>
+</div>
+<p id="appendix-B.4-8">The Responder computes message_4:<a href="#appendix-B.4-8" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.4-9">
+<pre>
+message_4 (CBOR Sequence) (9 bytes)
+48 8A DD 93 DB 40 48 59 F9
+</pre><a href="#appendix-B.4-9" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="prkout-and-prkexporter">
+<section id="appendix-B.5">
+        <h3 id="name-prk_out-and-prk_exporter">
+<a href="#appendix-B.5" class="section-number selfRef">B.5. </a><a href="#name-prk_out-and-prk_exporter" class="section-name selfRef">PRK_out and PRK_exporter</a>
+        </h3>
+<p id="appendix-B.5-1">After the exchange, the following PRK_out and PRK_exporter are derived by both entities:<a href="#appendix-B.5-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.5-2">
+<pre>
+PRK_out (Raw Value) (32 bytes)
+BB A6 DE D3 B0 38 D2 32 37 74 D8 92 14 A5 13 A2
+49 16 F0 42 29 6C 7C 72 9C D1 A6 7B 43 6F B4 14
+</pre><a href="#appendix-B.5-2" class="pilcrow">¶</a>
+</div>
+<div class="alignLeft art-text artwork" id="appendix-B.5-3">
+<pre>
+PRK_exporter (Raw Value) (32 bytes)
+2F CD 08 C0 C0 10 77 C6 D6 48 6B 9F 9B 67 70 20
+E8 D6 8F 04 BC DC CE 71 5D D2 77 ED 25 93 1B EF
+</pre><a href="#appendix-B.5-3" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="rpsk-and-rkid">
+<section id="appendix-B.6">
+        <h3 id="name-rpsk-and-rkid">
+<a href="#appendix-B.6" class="section-number selfRef">B.6. </a><a href="#name-rpsk-and-rkid" class="section-name selfRef">rPSK and rKID</a>
+        </h3>
+<p id="appendix-B.6-1">Both peers generate a resumption key for use in the next resumption attempt, as explained in <a href="#psk-resumption" class="auto internal xref">Section 6</a>:<a href="#appendix-B.6-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-B.6-2">
+<pre>
+rPSK (Raw Value) (16 bytes)
+5B 0B C7 63 F6 EA D1 7E 0E EA ED FD D3 36 A5 EE
+</pre><a href="#appendix-B.6-2" class="pilcrow">¶</a>
+</div>
+<div class="alignLeft art-text artwork" id="appendix-B.6-3">
+<pre>
+rKID (Raw Value) (1 byte)
+55
+</pre><a href="#appendix-B.6-3" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+</section>
+</div>
+<div id="change-log">
+<section id="appendix-C">
+      <h2 id="name-change-log">
+<a href="#appendix-C" class="section-number selfRef">Appendix C. </a><a href="#name-change-log" class="section-name selfRef">Change Log</a>
+      </h2>
+<p id="appendix-C-1">RFC Editor: Please remove this appendix.<a href="#appendix-C-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="appendix-C-2.1">
+          <p id="appendix-C-2.1.1">From -06 to -07<a href="#appendix-C-2.1.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="appendix-C-2.1.2.1">
+              <p id="appendix-C-2.1.2.1.1">Fixed test vectors<a href="#appendix-C-2.1.2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="appendix-C-2.1.2.2">
+              <p id="appendix-C-2.1.2.2.1">Updated security considerations after formal analysis<a href="#appendix-C-2.1.2.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="appendix-C-2.1.2.3">
+              <p id="appendix-C-2.1.2.3.1">Editorial changes<a href="#appendix-C-2.1.2.3.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+</li>
+        <li class="normal" id="appendix-C-2.2">
+          <p id="appendix-C-2.2.1">From -05 to -06<a href="#appendix-C-2.2.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="appendix-C-2.2.2.1">
+              <p id="appendix-C-2.2.2.1.1">Editorial changes<a href="#appendix-C-2.2.2.1.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+</li>
+        <li class="normal" id="appendix-C-2.3">
+          <p id="appendix-C-2.3.1">From -04 to -05<a href="#appendix-C-2.3.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="appendix-C-2.3.2.1">
+              <p id="appendix-C-2.3.2.1.1">Fixed misbinding attacks and resumption<a href="#appendix-C-2.3.2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="appendix-C-2.3.2.2">
+              <p id="appendix-C-2.3.2.2.1">Updated privacy considerations<a href="#appendix-C-2.3.2.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="appendix-C-2.3.2.3">
+              <p id="appendix-C-2.3.2.3.1">Added EDHOC-PSK and EAP section<a href="#appendix-C-2.3.2.3.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="appendix-C-2.3.2.4">
+              <p id="appendix-C-2.3.2.4.1">Editorial changes<a href="#appendix-C-2.3.2.4.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="appendix-C-2.3.2.5">
+              <p id="appendix-C-2.3.2.5.1">Fixed test vectors<a href="#appendix-C-2.3.2.5.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+</li>
+        <li class="normal" id="appendix-C-2.4">
+          <p id="appendix-C-2.4.1">From -03 to -04<a href="#appendix-C-2.4.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="appendix-C-2.4.2.1">
+              <p id="appendix-C-2.4.2.1.1">Test Vectors<a href="#appendix-C-2.4.2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="appendix-C-2.4.2.2">
+              <p id="appendix-C-2.4.2.2.1">Editorial changes<a href="#appendix-C-2.4.2.2.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+</li>
+        <li class="normal" id="appendix-C-2.5">
+          <p id="appendix-C-2.5.1">From -02 to -03<a href="#appendix-C-2.5.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="appendix-C-2.5.2.1">
+              <p id="appendix-C-2.5.2.1.1">Updated abstract and Introduction<a href="#appendix-C-2.5.2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="appendix-C-2.5.2.2">
+              <p id="appendix-C-2.5.2.2.1">Changed message_3 to hide the identity length from passive attackers<a href="#appendix-C-2.5.2.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="appendix-C-2.5.2.3">
+              <p id="appendix-C-2.5.2.3.1">CDDL Definitions<a href="#appendix-C-2.5.2.3.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="appendix-C-2.5.2.4">
+              <p id="appendix-C-2.5.2.4.1">Security considerations of independence of Session Keys<a href="#appendix-C-2.5.2.4.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="appendix-C-2.5.2.5">
+              <p id="appendix-C-2.5.2.5.1">Editorial changes<a href="#appendix-C-2.5.2.5.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+</li>
+        <li class="normal" id="appendix-C-2.6">
+          <p id="appendix-C-2.6.1">From -01 to -02<a href="#appendix-C-2.6.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="appendix-C-2.6.2.1">
+              <p id="appendix-C-2.6.2.1.1">Changes to message_3 formatting and processing<a href="#appendix-C-2.6.2.1.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+</li>
+        <li class="normal" id="appendix-C-2.7">
+          <p id="appendix-C-2.7.1">From -00 to -01<a href="#appendix-C-2.7.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="appendix-C-2.7.2.1">
+              <p id="appendix-C-2.7.2.1.1">Editorial changes and corrections<a href="#appendix-C-2.7.2.1.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+</li>
+      </ul>
+</section>
+</div>
+<div id="acknowledgments">
+<section id="appendix-D">
+      <h2 id="name-acknowledgments">
+<a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
+      </h2>
+<p id="appendix-D-1">The authors want to thank
+<span class="contact-name">Christian Amsüss</span>,
+<span class="contact-name">Scott Fluhrer</span>,
+<span class="contact-name">Charlie Jacomme</span>,
+and
+<span class="contact-name">Marco Tiloca</span>
+for reviewing and commenting on intermediate versions of the draft.<a href="#appendix-D-1" class="pilcrow">¶</a></p>
+<p id="appendix-D-2">This work has been partly funded by PID2023-148104OB-C43 funded by MICIU/AEI/10.13039/501100011033 (ONOFRE4), FEDER/UE EU HE CASTOR under Grant Agreement No 101167904 and EU CERTIFY under Grant Agreement No 101069471.<a href="#appendix-D-2" class="pilcrow">¶</a></p>
+<p id="appendix-D-3">This work was supported partially by Vinnova - the Swedish Agency for Innovation Systems - through the EUREKA CELTIC-NEXT project CYPRESS.<a href="#appendix-D-3" class="pilcrow">¶</a></p>
+<p id="appendix-D-4">This work has been partially supported by the French National Research Agency under the France 2030 label (NF-HiSec ANR-22-PEFT-0009)<a href="#appendix-D-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="authors-addresses">
+<section id="appendix-E">
+      <h2 id="name-authors-addresses">
+<a href="#name-authors-addresses" class="section-name selfRef">Authors' Addresses</a>
+      </h2>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Elsa Lopez-Perez</span></div>
+<div dir="auto" class="left"><span class="org">Inria</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:elsa.lopez-perez@inria.fr" class="email">elsa.lopez-perez@inria.fr</a>
+</div>
+</address>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Göran Selander</span></div>
+<div dir="auto" class="left"><span class="org">Ericsson</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:goran.selander@ericsson.com" class="email">goran.selander@ericsson.com</a>
+</div>
+</address>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">John Preuß Mattsson</span></div>
+<div dir="auto" class="left"><span class="org">Ericsson</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:john.mattsson@ericsson.com" class="email">john.mattsson@ericsson.com</a>
+</div>
+</address>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Rafael Marin-Lopez</span></div>
+<div dir="auto" class="left"><span class="org">University of Murcia</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:rafa@um.es" class="email">rafa@um.es</a>
+</div>
+</address>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Francisco Lopez-Gomez</span></div>
+<div dir="auto" class="left"><span class="org">University of Murcia</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:francisco.lopezg@um.es" class="email">francisco.lopezg@um.es</a>
+</div>
+</address>
+</section>
+</div>
+<script>const toc = document.getElementById("toc");
+toc.querySelector("h2").addEventListener("click", e => {
+  toc.classList.toggle("active");
+});
+toc.querySelector("nav").addEventListener("click", e => {
+  toc.classList.remove("active");
+});
+</script>
+</body>
+</html>
