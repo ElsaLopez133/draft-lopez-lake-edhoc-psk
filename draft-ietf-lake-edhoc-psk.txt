@@ -5,31 +5,30 @@
 LAKE Working Group                                        E. Lopez-Perez
 Internet-Draft                                                     Inria
 Intended status: Standards Track                             G. Selander
-Expires: 12 March 2027                                 J. Preuß Mattsson
+Expires: 8 April 2027                                  J. Preuß Mattsson
                                                                 Ericsson
                                                           R. Marin-Lopez
                                                           F. Lopez-Gomez
                                                     University of Murcia
-                                                        8 September 2026
+                                                          5 October 2026
 
 
-             EDHOC Authenticated with Pre-Shared Keys (PSK)
+             LAKE Authenticated with Pre-Shared Keys (PSKs)
                     draft-ietf-lake-edhoc-psk-latest
 
 Abstract
 
    This document specifies a Pre-Shared Key (PSK) authentication method
-   for the Ephemeral Diffie-Hellman Over COSE (EDHOC) Lightweight
-   Authenticated Key Exchange (LAKE) protocol.  The PSK method provides
-   mutual authentication, ephemeral key exchange, identity protection,
-   and quantum resistance while incurring lower computational costs than
-   the public-key authentication methods specified for EDHOC.  It is
-   suited for systems where nodes share a PSK provided out-of-band
-   (external PSK) and enables efficient session resumption with less
-   computational overhead when the PSK is provided from a previous EDHOC
-   session (resumption PSK).  This document details the PSK message
-   flow, key derivation changes, message formatting, processing, and
-   security considerations.
+   for the Lightweight Authenticated Key Exchange (LAKE) protocol.  The
+   PSK method provides mutual authentication, ephemeral key exchange,
+   identity protection, and quantum resistance while incurring lower
+   computational costs than the public-key authentication methods
+   specified for LAKE.  It is suited for systems where nodes share a PSK
+   provided out-of-band (external PSK) and enables efficient session
+   resumption with less computational overhead when the PSK is provided
+   from a previous LAKE session (resumption PSK).  This document details
+   the PSK message flow, key derivation changes, message formatting,
+   processing, and security considerations.
 
 About This Document
 
@@ -63,7 +62,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 12 March 2027.
+   This Internet-Draft will expire on 8 April 2027.
 
 Copyright Notice
 
@@ -87,8 +86,8 @@ Table of Contents
      3.1.  Credentials
        3.1.1.  ID_CRED_PSK
        3.1.2.  CRED_I and CRED_R
-       3.1.3.  Encoding and processing guidelines
-     3.2.  Message Flow of EDHOC-PSK
+       3.1.3.  Encoding and Processing Guidelines
+     3.2.  Message Flow of LAKE-PSK
    4.  Key Derivation
    5.  Message Formatting and Processing
      5.1.  Message 1
@@ -101,26 +100,26 @@ Table of Contents
        5.3.2.  Initiator Composition of Message 3
        5.3.3.  Responder Processing of Message 3
      5.4.  Message 4
-   6.  PSK usage for Session Resumption
-     6.1.  Privacy Considerations for Resumption
-     6.2.  Security Considerations for Resumption
-   7.  EDHOC-PSK and Extensible Authentication Protocol (EAP)
-   8.  EDHOC-PSK and OSCORE
+   6.  PSK Usage for Session Resumption
+   7.  LAKE-PSK and Extensible Authentication Protocol (EAP)
+   8.  LAKE-PSK and OSCORE
    9.  Security Considerations
      9.1.  Identity Protection
      9.2.  Protection of Pre-Shared Keys
      9.3.  Mutual Authentication
      9.4.  Protection of External Authorization Data (EAD)
-     9.5.  Cryptographic strength
+     9.5.  Cryptographic Strength
      9.6.  Downgrade Protection
      9.7.  Post Quantum Considerations
      9.8.  Confidentiality
      9.9.  Independence of Session Keys
      9.10. Message 4 and Mutual Authentication Requirements
      9.11. Post-Compromise Security
+     9.12. Privacy Considerations for Resumption
+     9.13. Security Considerations for Resumption
    10. IANA Considerations
-     10.1.  EDHOC Method Type Registry
-     10.2.  EDHOC Exporter Label Registry
+     10.1.  EDHOC Method Types Registry
+     10.2.  EDHOC Exporter Labels Registry
    11. References
      11.1.  Normative References
      11.2.  Informative References
@@ -138,21 +137,20 @@ Table of Contents
 
 1.  Introduction
 
-   This document defines a Pre-Shared Key (PSK) authentication method
-   for the Ephemeral Diffie-Hellman Over COSE (EDHOC) Lightweight
-   Authenticated Key Exchange (LAKE) protocol [RFC9528].  The PSK method
-   trades the complexity of symmetric-key distribution for improved
-   computational efficiency.  Although symmetric-key distribution is
-   more complex than public-key credential distribution, PSK
-   authentication requires less computation than the authentication
-   methods defined in [RFC9528].  The PSK method provides mutual
-   authentication, ephemeral asymmetric key exchange, and identity
-   protection.
+   This document defines LAKE-PSK, a Pre-Shared Key (PSK) authentication
+   method for the Lightweight Authenticated Key Exchange (LAKE) protocol
+   [RFC9528].  The PSK method trades the complexity of symmetric-key
+   distribution for improved computational efficiency.  Although
+   symmetric-key distribution is more complex than public-key credential
+   distribution, PSK authentication requires less computation than the
+   authentication methods defined in [RFC9528].  The PSK method provides
+   mutual authentication, ephemeral asymmetric key exchange, and
+   identity protection.
 
-   EDHOC with PSK authentication benefits use cases where two nodes
-   share a Pre-Shared Key (PSK) provided out-of-band (external PSK).
-   Examples include the Authenticated Key Management Architecture (AKMA)
-   in mobile systems or the Peer and Authenticator in Extensible
+   LAKE with PSK authentication benefits use cases where two nodes share
+   a Pre-Shared Key (PSK) provided out-of-band (external PSK).  Examples
+   include the Authenticated Key Management Architecture (AKMA) in
+   mobile systems or the Peer and Authenticator in Extensible
    Authentication Protocol (EAP) systems.  The PSK method enables the
    nodes to perform ephemeral key exchange, achieving Perfect Forward
    Secrecy (PFS).  This ensures that even if the PSK is compromised,
@@ -160,29 +158,30 @@ Table of Contents
    future communications are protected against passive attackers.
    Additionally, by leveraging the PSK for both authentication and key
    derivation, the method provides quantum-resistant key exchange and
-   authentication even when used with ECDHE.
+   authentication even when used with Elliptic Curve Diffie–Hellman
+   Ephemeral (ECDHE).
 
-   Another important use case of PSK authentication in the EDHOC
-   protocol is session resumption.  This allows previously connected
-   parties to quickly reestablish secure communication using pre-shared
-   keys from a prior session, reducing the overhead associated with key
-   exchange and asymmetric authentication.  By using PSK authentication,
-   EDHOC allows session keys to be refreshed with significantly lower
-   computational overhead compared to public-key authentication.  In
-   this case, the resumption PSK is provisioned after the establishment
-   of a previous EDHOC session by using EDHOC_Exporter.  Thus, the
-   external PSK may serve as a long-term credential, while the
-   resumption PSK is a short-lived credential derived from a previous
-   EDHOC session.
+   Another important use case of PSK authentication in the LAKE protocol
+   is session resumption.  This allows previously connected parties to
+   quickly reestablish secure communication using pre-shared keys from a
+   prior session, reducing the overhead associated with key exchange and
+   asymmetric authentication.  By using PSK authentication, LAKE allows
+   session keys to be refreshed with significantly lower computational
+   overhead compared to public-key authentication.  In this case, the
+   resumption PSK is provisioned after the establishment of a previous
+   LAKE session by using EDHOC_Exporter (see Section 4.2.1 of
+   [RFC9528]).  Thus, the external PSK may serve as a long-term
+   credential, while the resumption PSK is a short-lived credential
+   derived from a previous LAKE session.
 
    Section 3 provides an overview of the PSK method, including its
    message flow and associated credentials.  Section 4 outlines the
    changes to key derivation compared to [RFC9528].  Section 5 details
    message formatting and processing, and Section 6 describes the usage
-   of PSK for resumption.  Section 7 discusses the use of EDHOC-PSK with
-   EAP-EDHOC and Section 8 defines the use of EDHOC-PSK with Object
+   of PSK for resumption.  Section 7 discusses the use of LAKE-PSK with
+   EAP-EDHOC and Section 8 defines the use of LAKE-PSK with Object
    Security for Constrained RESTful Environments (OSCORE, [RFC8613]).
-   Security considerations are described in Section 9, and Section 10
+   Security considerations are compiled in Section 9 and Section 10
    outlines the IANA considerations.
 
 2.  Conventions and Definitions
@@ -194,50 +193,57 @@ Table of Contents
    capitals, as shown here.
 
    Readers are expected to be familiar with the terms and concepts
-   described in EDHOC [RFC9528], Concise Binary Object Representation
+   related to LAKE [RFC9528], Concise Binary Object Representation
    (CBOR) [RFC8949], CBOR Sequences [RFC8742], CBOR Object Signing and
    Encryption (COSE) Structures and Processing [RFC9052], COSE
    Algorithms [RFC9053], CBOR Web Token (CWT) and CWT Claims Set (CCS)
    [RFC8392], and the Concise Data Definition Language (CDDL) [RFC8610],
    which is used to express CBOR data structures.
 
+   This document uses the acronym LAKE, expanded to Lightweight
+   Authenticated Key Exchange, to denote the protocol specified as EDHOC
+   in [RFC9528].  LAKE is also used in place of EDHOC in descriptive
+   terms such as LAKE message_1 or LAKE EAD item.  Identifiers defined
+   literally in [RFC9528] or in IANA registries (e.g., EDHOC_Exporter,
+   the EDHOC registries, media types, and URIs) are unchanged.
+
 3.  Protocol
 
-   This document specifies a new EDHOC authentication method (see
+   This document specifies a new LAKE authentication method (see
    Section 3.2 of [RFC9528]) referred to as the Pre-Shared Key method
-   (EDHOC-PSK).  This method shares some features with, and differs in
+   (LAKE-PSK).  This method shares some features with, and differs in
    other respects from, the authentication methods previously defined in
-   EDHOC.
+   LAKE.
 
    Authentication is based on a PSK shared by the Initiator and the
    Responder.  As in the methods defined in [RFC9528], CRED_I and CRED_R
    are authentication credentials containing identifying information for
    the Initiator and Responder, respectively.  However, unlike those
-   methods, EDHOC-PSK uses a single authentication credential
-   identifier, ID_CRED_PSK, which the Responder uses to retrieve the PSK
-   and the associated authentication credentials.
+   methods, LAKE-PSK uses a single authentication credential identifier,
+   ID_CRED_PSK, which the Responder uses to retrieve the PSK and the
+   associated authentication credentials.
 
    The PSK method uses a “by reference” approach for credential
    representation.  ID_CRED_PSK can be kept minimal, enabling a very
    compact on-the-wire encoding.  In contrast, [RFC9528] defines that
    ID_CRED_I and ID_CRED_R may convey arbitrary identity and
-   application-specific context.  This separation allows EDHOC-PSK to
+   application-specific context.  This separation allows LAKE-PSK to
    minimize overhead for PSK identification while preserving flexibility
    in both identity and contextual information, as well as the security
    properties associated with their use.
 
    Like the Internet Key Exchange Protocol Version 2 (IKEv2) [RFC7296],
-   EDHOC-PSK encrypts the PSK identifier ID_CRED_PSK, providing identity
+   LAKE-PSK encrypts the PSK identifier ID_CRED_PSK, providing identity
    protection against passive attackers.  In contrast, (D)TLS 1.3
-   [RFC8446] [RFC9147] transmits the PSK identifier in cleartext and
+   [RFC9846] [RFC9147] transmits the PSK identifier in cleartext and
    therefore does not provide identity protection for PSK-based
    authentication.
 
 3.1.  Credentials
 
-   The Initiator and Responder are assumed to share a PSK (either an
-   external PSK or a resumption PSK) with high entropy that meets the
-   following requirements:
+   The Initiator and Responder are assumed to share a PSK (an external
+   PSK or a resumption PSK) with high entropy that meets the following
+   requirements:
 
    *  Only the Initiator and the Responder have access to the PSK.
 
@@ -246,21 +252,26 @@ Table of Contents
 
 3.1.1.  ID_CRED_PSK
 
-   ID_CRED_PSK is a key identifier Section 3.1 of [RFC8152] formatted as
+   ID_CRED_PSK is a key identifier Section 3.1 of [RFC9052] formatted as
    a COSE header map containing header parameters that can be used to
    retrieve one or more pre-shared keys and associated information
-   required for EDHOC processing.  Following the compact encoding rules
+   required for LAKE processing.  Following the compact encoding rules
    defined in Section 3.5.3.2 of [RFC9528], an ID_CRED_PSK containing
-   only a single 'kid' parameter can be encoded directly as the value of
+   only a single 'kid' parameter is encoded directly as the value of
    that parameter.  For example, the identifier
+
+   ID_CRED_PSK = { 4 : h'ff' }; 4 = 'kid'
+
+   is not encoded as the CBOR map 0xa10441ff but the CBOR byte string
+   h'ff', i.e., 0x41ff.  Another example, the identifier
 
    ID_CRED_PSK = { 4 : h'10' }; 4 = 'kid'
 
-   is encoded as the CBOR byte string h'0010' rather than as the full
-   CBOR map, reducing message size.
+   is neither the CBOR map 0xA1044110 nor the CBOR byte string h'10',
+   i.e., 0x4110, but the CBOR integer 0x10, reducing message size.
 
    The purpose of ID_CRED_PSK is to facilitate retrieval of the PSK and
-   associated information required for EDHOC processing.  While
+   associated information required for LAKE processing.  While
    ID_CRED_PSK uses encoding and representation patterns from
    Section 3.5.3.2 of [RFC9528], it differs fundamentally in that it
    identifies a symmetric key rather than a public authentication key.
@@ -271,7 +282,7 @@ Table of Contents
    It is RECOMMENDED that ID_CRED_PSK uniquely or stochastically
    identifies the corresponding PSK context.  Uniqueness avoids
    ambiguity that could require the recipient to try multiple candidate
-   PSK and associated information, while stochasticity reduces the risk
+   PSKs and associated information, while stochasticity reduces the risk
    of identifier collisions and supports stateless processing.  These
    properties align with the requirements for rKID in session resumption
    (see Section 6).
@@ -311,17 +322,17 @@ Table of Contents
 
    Alternative formats for CRED_I and CRED_R MAY be used.  When a
    resumption PSK is employed, CRED_I and CRED_R MUST be the same
-   credentials used in the initial EDHOC exchange, for example, public-
-   key credentials such as X.509 certificates.
+   credentials used in the initial LAKE exchange, for example, public-
+   key credentials such as X.509 certificates [RFC5280].
 
    Implementations MUST ensure that CRED_I and CRED_R are distinct, for
-   example by including different identities in their sub-claims (e.g.,
-   "42-50-31-FF-EF-37-32-39" and "23-11-58-AA-B3-7F-10").  Ensuring
-   distinct credentials simplifies correct party identification and
-   prevents reflection and misbinding attacks, as described in
+   example by including different identities in their 'sub' claims
+   (e.g., "42-50-31-FF-EF-37-32-39" and "23-11-58-AA-B3-7F-10").
+   Ensuring distinct credentials simplifies correct party identification
+   and prevents reflection and misbinding attacks, as described in
    Appendix D.2 of [RFC9528].
 
-3.1.3.  Encoding and processing guidelines
+3.1.3.  Encoding and Processing Guidelines
 
    The following guidelines apply to the encoding and handling of CRED_x
    and ID_CRED_PSK.  Requirements on CRED_x apply both to CRED_I and to
@@ -343,12 +354,13 @@ Table of Contents
       Section 3.5.3.2 of [RFC9528] MUST be applied in plaintext fields
       (such as PLAINTEXT_3A).  These optimizations MUST NOT be applied
       in COSE header parameters or in other contexts where the full map
-      structure is required.  For example:
+      structure is required.  For example, in such cases where these
+      optimizations are not applied:
 
-      -  { 4 : h'0f' } is encoded as 0xa104410f, instead of 0x410f (CBOR
-         encoding of the CBOR byte string h'0f')
+      -  { 4 : h'ff' } is encoded as 0xa10441ff, instead of 0x41ff (CBOR
+         encoding of the CBOR byte string h'ff')
 
-      -  { 4 : 21 } is encoded as 0xa1044115, instead of 0x15 (CBOR
+      -  { 4 : h'15' } is encoded as 0xa1044115, instead of 0x15 (CBOR
          encoding of the CBOR integer 21)
 
    *  To prevent misbinding attacks, identity information such as a
@@ -360,9 +372,9 @@ Table of Contents
       including aspects of its provenance, intended use, and validity
       period.  This aligns with the notion of “context” in [RFC9258].
 
-3.2.  Message Flow of EDHOC-PSK
+3.2.  Message Flow of LAKE-PSK
 
-   The message flow of EDHOC-PSK follows the structure defined in
+   The message flow of LAKE-PSK follows the structure defined in
    [RFC9528], with authentication based on symmetric keys rather than
    public keys.  For identity protection, credential-related message
    fields appear first in message_3.
@@ -371,13 +383,13 @@ Table of Contents
    obtained through the first two messages.  If Diffie-Hellman key
    exchange is used, G_X and G_Y are the ephemeral public keys, and the
    shared secret G_XY is the DH shared secret, as in [RFC9528].  If the
-   Diffie-Hellman procedure is replaced by a KEM (e.g.
-   [I-D.spm-lake-pqsuites]), then G_X and G_Y are encapsulation key and
+   Diffie-Hellman procedure is replaced by a KEM (e.g.,
+   [I-D.ietf-lake-pqsuites]), then G_X and G_Y are encapsulation key and
    ciphertext, respectively, and the shared secret G_XY is derived by
    the KEM.
 
    The Responder authenticates the Initiator first.  Figure 1
-   illustrates the message flow of the EDHOC-PSK authentication method.
+   illustrates the message flow of the LAKE-PSK authentication method.
 
    Initiator                                                   Responder
    |                  METHOD, SUITES_I, G_X, C_I, EAD_1                |
@@ -396,33 +408,33 @@ Table of Contents
    |<------------------------------------------------------------------+
    |                             message_4                             |
 
-              Figure 1: Overview of Message Flow of EDHOC-PSK.
+              Figure 1: Overview of Message Flow of LAKE-PSK.
 
    This approach provides identity protection against passive attackers
-   for both Initiator and Responder.  EDHOC message_4 remains OPTIONAL,
+   for both Initiator and Responder.  LAKE message_4 remains OPTIONAL,
    but is needed to authenticate the Responder and achieve mutual
-   authentication in EDHOC when external applications (e.g., OSCORE) are
-   not relied upon.  In either case, the inclusion of a fourth message
-   provides mutual authentication and explicit key confirmation (see
-   Section 5.4).
+   authentication in LAKE when external applications using secure
+   communication (e.g., with OSCORE) are not relied upon.  In either
+   case, the inclusion of a fourth message provides mutual
+   authentication and explicit key confirmation (see Section 5.4).
 
 4.  Key Derivation
 
-   The pseudorandom keys (PRKs) used in the EDHOC-PSK authentication
+   The pseudorandom keys (PRKs) used in the LAKE-PSK authentication
    method are derived with EDHOC_Extract, as in [RFC9528].
 
    PRK  = EDHOC_Extract( salt, IKM )
 
    where salt and input keying material (IKM) are defined for each key.
-   The definition of EDHOC_Extract depends on the EDHOC hash algorithm
-   of the selected cipher suite, see Section 4.1.1 of [RFC9528].
+   The definition of EDHOC_Extract depends on the LAKE hash algorithm of
+   the selected cipher suite, see Section 4.1.1 of [RFC9528].
 
-   To maintain a uniform key schedule across all EDHOC authentication
+   To maintain a uniform key schedule across all LAKE authentication
    methods, the same pseudorandom key notation (PRK_2e, PRK_3e2m, and
    PRK_4e3m) is retained.  The index notation is preserved for
-   consistency with other EDHOC authentication variants, even though it
+   consistency with other LAKE authentication variants, even though it
    does not fully reflect the functional role of the keys in this
-   method; for example, no MACs are used in EDHOC-PSK.
+   method; for example, no MACs are used in LAKE-PSK.
 
    PRK_2e is extracted as in [RFC9528] with
 
@@ -437,8 +449,8 @@ Table of Contents
    [RFC9528].
 
    The other PRKs and transcript hashes are modified as specified below.
-   Figure 2 lists the key derivations that differ from Section 4.1.2 of
-   [RFC9528].
+   Figure 2 lists the key derivations that differ from what is defined
+   in Sections 4.1.1 and 4.1.2 of [RFC9528].
 
     PRK_3e2m     = PRK_2e
     KEYSTREAM_2A = EDHOC_KDF( PRK_2e,   0, TH_2,  plaintext_length_2a )
@@ -447,7 +459,7 @@ Table of Contents
     K_3          = EDHOC_KDF( PRK_4e3m, 3, TH_3, key_length )
     IV_3         = EDHOC_KDF( PRK_4e3m, 4, TH_3, iv_length )
 
-                   Figure 2: Key Derivation of EDHOC-PSK.
+                   Figure 2: Key Derivation of LAKE-PSK.
 
    where:
 
@@ -470,14 +482,15 @@ Table of Contents
 
    This section specifies the differences in message formatting and
    processing compared to Section 5 of [RFC9528].  Note that, if any
-   processing step fails, then the Responder MUST send an EDHOC error
-   message back as defined in Section 6 of [RFC9528], and the EDHOC
+   processing step fails, then the message recipient MUST send an LAKE
+   error message back as defined in Section 6 of [RFC9528] and the LAKE
    session MUST be aborted.
 
 5.1.  Message 1
 
    Message 1 is formatted and processed as specified in Section 5.2 of
-   [RFC9528].
+   [RFC9528], with the METHOD field set to the LAKE-PSK method (i.e.,
+   the value registered in Section 10.1).
 
 5.2.  Message 2
 
@@ -489,7 +502,7 @@ Table of Contents
 5.2.2.  Responder Composition of Message 2
 
    CIPHERTEXT_2A is calculated with a binary additive stream cipher,
-   using a keystream generated with EDHOC_Expand, and the following
+   using a keystream generated with EDHOC_Expand and the following
    plaintext:
 
    *  PLAINTEXT_2A = ( C_R, ? EAD_2 )
@@ -500,7 +513,7 @@ Table of Contents
    to [RFC9528], ID_CRED_R, MAC_2, and Signature_or_MAC_2 are not
    included in message_2.  This omission is the primary difference from
    the signature and MAC-based authentication methods defined in
-   [RFC9528], as authentication in EDHOC-PSK relies solely on the shared
+   [RFC9528], as authentication in LAKE-PSK relies solely on the shared
    PSK and the successful decryption of protected messages.
    KEYSTREAM_2A is defined in Section 4.
 
@@ -536,19 +549,20 @@ Table of Contents
             ID_CRED_PSK = { 4 : kid_PSK }, then the compact encoding is
             applied, see Section 3.5.3.2 of [RFC9528].
 
-         o  For the case of plaintext_length exceeding the EDHOC_KDF
-            output size, see Appendix G of [RFC9528].
+         o  For the case of plaintext_length_2a or plaintext_length_3a
+            exceeding the EDHOC_KDF output size, see Appendix G of
+            [RFC9528].
 
       -  Compute KEYSTREAM_3A as in Section 4.
 
       -  CIPHERTEXT_3A = PLAINTEXT_3A XOR KEYSTREAM_3A
 
    *  CIPHERTEXT_3B is the 'ciphertext' of the COSE_Encrypt0 object as
-      defined in Sections 5.2 and 5.3 of [RFC9528], computed with the
-      EDHOC AEAD algorithm of the selected cipher suite, using the
+      defined in Sections 5.2 and 5.3 of [RFC9052], computed with the
+      LAKE AEAD algorithm of the selected cipher suite, using the
       encryption key K_3, the initialization vector IV_3 (if used by the
       AEAD algorithm), the parameters described in Section 5.2 of
-      [RFC9528], plaintext PLAINTEXT_3B and the following parameters as
+      [RFC9052], plaintext PLAINTEXT_3B and the following parameters as
       input:
 
       -  protected = h''
@@ -574,15 +588,13 @@ Table of Contents
    *  Decrypt CIPHERTEXT_3A using binary XOR with KEYSTREAM_3A to
       recover PLAINTEXT_3A.
 
-   *  Parse the structure of message_3, which consists of a stream-
-      cipher encrypted structure, CIPHERTEXT_3A = PLAINTEXT_3A XOR
-      KEYSTREAM_3A, where PLAINTEXT_3A = ( ID_CRED_PSK, CIPHERTEXT_3B )
-      and CIPHERTEXT_3B is the inner AEAD-encrypted object.
+   *  Parse the structure of PLAINTEXT_3A = ( ID_CRED_PSK, CIPHERTEXT_3B
+      ), where CIPHERTEXT_3B is the inner AEAD-encrypted object.
 
    *  Use ID_CRED_PSK to identify the authentication credentials and
       retrieve PSK, CRED_I, and CRED_R.
 
-   *  Select first candidate.
+   *  Select a candidate tuple (PSK, CRED_I, CRED_R).
 
    *  Derive K_3 and IV_3 as defined in Section 4.
 
@@ -594,9 +606,9 @@ Table of Contents
 
       -  protected = h''
 
-      -  EDHOC AEAD algorithm of the selected cipher suite.
+      -  LAKE AEAD algorithm of the selected cipher suite.
 
-   If AEAD verification fails, retry with a new candidate.  If all
+   If AEAD verification fails, retry with a new candidate tuple.  If all
    candidate authentication credential sets fail, this indicates a
    processing problem or that the message was tampered with.  If it
    succeeds, the Responder concludes that the Initiator possesses the
@@ -615,9 +627,9 @@ Table of Contents
 
    After successfully verifying message_4, or another fourth message
    from the Responder protected with an exported application key such as
-   an OSCORE message, the Initiator is assured that the Responder has
-   derived PRK_out (key confirmation) and that no other party can derive
-   this key.
+   an OSCORE-protected message, the Initiator is assured that the
+   Responder has derived PRK_out (key confirmation) and that no other
+   party can derive this key.
 
    The Initiator MUST NOT persistently store PRK_out or application keys
    until it has successfully verified such a fourth message and the
@@ -627,11 +639,11 @@ Table of Contents
    confirmation but also authenticates the Responder.  For mutual
    authentication a fourth message is therefore mandatory.
 
-6.  PSK usage for Session Resumption
+6.  PSK Usage for Session Resumption
 
-   This section specifies how EDHOC-PSK is used for session resumption
-   in EDHOC.  The EDHOC_Exporter, as defined in Section 4.2 of
-   [RFC9528], is used to derive the resumption parameters rPSK and rKID:
+   This section specifies how LAKE-PSK is used for session resumption in
+   LAKE.  The EDHOC_Exporter, as defined in Section 4.2 of [RFC9528], is
+   used to derive the resumption parameters rPSK and rKID:
 
           rPSK         = EDHOC_Exporter( TBD2, h'', hash_length )
           rKID         = EDHOC_Exporter( TBD3, h'', kid_length )
@@ -641,15 +653,15 @@ Table of Contents
 
    where:
 
-   *  hash_length is the output size of the EDHOC hash algorithm
-      associated with the PSK, i.e, the EDHOC hash algorithm of the
-      selected cipher suite used in the EDHOC session in which the
+   *  hash_length is the output size of the LAKE hash algorithm
+      associated with the PSK, i.e., the LAKE hash algorithm of the
+      selected cipher suite used in the LAKE session in which the
       resumption PSK is established.
 
    *  kid_length defaults to 2 bytes.
 
-   A peer that has successfully completed an EDHOC session, regardless
-   of the authentication method used or whether the session was a PSK
+   A peer that has successfully completed an LAKE session, regardless of
+   the authentication method used or whether the session was a PSK
    resumption, MAY generate a resumption key.  Whether resumption keys
    are generated is determined by the application profile, see
    Section 3.9 of [RFC9528].  Support for resumption can be indicated,
@@ -665,67 +677,38 @@ Table of Contents
 
    *  The Initiator MAY delete rPSK_i after successfully verifying the
       fourth message.  At that point, the Initiator can be certain that
-      the Responder already has derived the next resumption key,
+      the Responder is able to derive the next resumption key,
       rPSK_(i+1), if the Responder wants to.
 
    *  The Responder MAY delete rPSK_i after successfully verifying a
       fifth message from the Initiator protected with an exported
-      application key such as an OSCORE message, if present.  At that
-      point, the Responder can be certain that the Initiator is able to
-      derive the next resumption key, rPSK_(i+1), if the Inititator
-      wants to.
+      application key such as an OSCORE-protected message, if present.
+      At that point, the Responder can be certain that the Initiator is
+      able to derive the next resumption key, rPSK_(i+1), if the
+      Initiator wants to.
 
-   When resumption PSKs are in use, implementations MUST retain the
-   ID_CRED_I, ID_CRED_R and EDHOC hash algorithm used for the original
-   non-resumption authentication (e.g., the static DH public keys, or
-   certificates) and associate them with the current resumption PSK.
-   Implementations MAY retain the external ID_CRED_PSK and associated
-   PSK to allow fallback if resumption fails. If fallback authentication
-   uses an external PSK, the Initiator selects which PSK to present via
-   ID_CRED_PSK.  If a credential associated with a resumption key
-   expires, implementations SHOULD retry either with external PSK or a
-   different METHOD. How long the original authentication credentials
-   are retained is determined by the application profile or by the
-   expiration time of the credential (e.g., the exp claim in a CWT).
-   Key lifetime, retention, and retry policy are determined by the
-   application profile.
+   When resumption PSKs are used and public keys were used in the
+   original session for non-resumption authentication, implementations
+   MUST retain ID_CRED_I, ID_CRED_R, and LAKE hash algorithm used in
+   that original session and associate them with the current resumption
+   PSK.  Implementations MAY retain an external ID_CRED_PSK and
+   associated PSK to allow fallback if resumption fails. If fallback
+   authentication uses an external PSK, the Initiator selects which PSK
+   to use and indicates it via ID_CRED_PSK.  If a credential associated
+   with a resumption key expires, implementations SHOULD retry either
+   with an external PSK or a different authentication method. How long
+   the original authentication credentials are retained is determined by
+   the application profile or by the expiration time of the credential
+   (e.g., the 'exp' claim in a CWT).  Key lifetime, retention, and retry
+   policy are determined by the application profile.
 
-6.1.  Privacy Considerations for Resumption
+7.  LAKE-PSK and Extensible Authentication Protocol (EAP)
 
-   When using resumption PSKs:
-
-   *  ID_CRED_PSK is not exposed to passive attackers, and under normal
-      operation it is not reused.  Reuse of the same ID_CRED_PSK can
-      occur due to transmission errors or when a peer loses its stored
-      resumption key.  An active attacker can obtain the value of
-      ID_CRED_PSK and force its reuse.  This aligns with the security
-      goals of EDHOC-PSK, which are to provide identity protection
-      against passive attackers, but not against active attackers.
-
-6.2.  Security Considerations for Resumption
-
-   *  Resumption PSKs MUST NOT be used for purposes other than EDHOC
-      session resumption.
-
-   *  Resumption PSKs MUST be securely stored with the same level of
-      protection as the session keys.
-
-   *  Parties SHOULD prevent excessive reuse of the same resumption PSK.
-
-   *  The optional external PSK and the resumption PSKs form a key
-      ratchet.  If previous PSKs have been securely erased, compromise
-      of the current resumption PSK does not enable recovery of earlier
-      PSKs.  This property holds regardless of whether ECDHE or a post-
-      quantum key exchange is used.  Handling of external and resumption
-      PSKs can be specified in the application profile.
-
-7.  EDHOC-PSK and Extensible Authentication Protocol (EAP)
-
-   EDHOC with PSK authentication has several important use cases within
+   LAKE with PSK authentication has several important use cases within
    the Extensible Authentication Protocol (EAP).
 
    One use case is the resumption of a session established with the EAP
-   method EAP-EDHOC [I-D.ietf-emu-eap-edhoc], regardless of the EDHOC-
+   method EAP-EDHOC [I-D.ietf-emu-eap-edhoc], regardless of the LAKE-
    based authentication method originally used in that session.  This is
    similar to the resumption mechanism in EAP-TLS 1.3 [RFC9190].
    Resumption reduces the number of round trips and allows the EAP-EDHOC
@@ -737,7 +720,7 @@ Table of Contents
    The use of resumption with EAP-EDHOC is optional for the peer, but it
    is RECOMMENDED whenever a valid rPSK is available.  On the server
    side, resumption acceptance is also optional, but it is RECOMMENDED
-   if the rPSK remains valid.  The server may, however, require a new
+   if the rPSK remains valid.  The server MAY, however, require a new
    initial handshake by refusing resumption.  It is further RECOMMENDED
    to use Network Access Identifiers (NAIs) with the same realm in the
    EAP identity response during both the full handshake and resumption.
@@ -753,44 +736,44 @@ Table of Contents
    passive attacker to decrypt both past and future sessions.  Note that
    PSK authentication is not allowed in EAP-TLS [RFC9190].
 
-8.  EDHOC-PSK and OSCORE
+8.  LAKE-PSK and OSCORE
 
-   [RFC9668] describes an optimized use of EDHOC with OSCORE by
-   combining EDHOC message_3 with the first OSCORE request.  This
+   [RFC9668] describes an optimized use of LAKE with OSCORE by combining
+   LAKE message_3 with the first OSCORE-protected request.  This
    procedure omits message_4, but key confirmation of the Responder is
-   provided by a subsequent OSCORE response to the Initiator.
+   provided by a subsequent OSCORE-protected response to the Initiator.
 
-   In EDHOC-PSK, authentication of the Responder is provided by
-   message_4 or another fourth message.  Hence, the combined delivery
-   described in Section 3 of [RFC9668] can be applied to EDHOC-PSK.
-   Note that, in this case, the Responder is not authenticated until the
-   Initiator has verified a matching OSCORE response.  However, only the
-   party with the correct PSK can decrypt the OSCORE request.
+   In LAKE-PSK, authentication of the Responder is provided by message_4
+   or another fourth message.  Hence, the combined delivery described in
+   Section 3 of [RFC9668] can be applied to LAKE-PSK.  Note that, in
+   this case, the Responder is not authenticated until the Initiator has
+   verified a matching OSCORE-protected response.  However, only the
+   party with the correct PSK can decrypt the OSCORE-protected request.
 
 9.  Security Considerations
 
-   The EDHOC-PSK authentication method introduces deviations from the
-   initial specification of EDHOC [RFC9528].  This section analyzes the
+   The LAKE-PSK authentication method introduces deviations from the
+   initial specification of LAKE [RFC9528].  This section analyzes the
    security implications of these changes and discusses the security
-   properties of EDHOC authenticated with PSK.
+   properties of LAKE authenticated with a PSK.
 
 9.1.  Identity Protection
 
-   In EDHOC-PSK, the identifier ID_CRED_PSK in message_3 is encrypted
+   In LAKE-PSK, the identifier ID_CRED_PSK in message_3 is encrypted
    with a keystream derived from the ephemeral shared secret G_XY.  This
    provides identity protection of both the Initiator and Responder
    against passive attackers.  This contrasts with the asymmetric
-   authentication methods in Section 9.1 of [RFC9528], which protect the
-   Initiator’s identity against active attackers and the Responder’s
-   identity against passive ones.  EDHOC-PSK does not protect the PSK
-   identifier against active attackers as an attacker impersonating the
-   Responder can decrypt ID_CRED_PSK.  The time to lookup or process an
-   authentication credential based on ID_CRED_PSK may leak information
-   about the identity.
+   authentication methods discussed in Section 9.1 of [RFC9528], which
+   protect the Initiator’s identity against active attackers and the
+   Responder’s identity against passive ones.  LAKE-PSK does not protect
+   the PSK identifier against active attackers as an attacker
+   impersonating the Responder can decrypt ID_CRED_PSK.  The time to
+   lookup or process an authentication credential based on ID_CRED_PSK
+   may leak information about the identity.
 
 9.2.  Protection of Pre-Shared Keys
 
-   The security of EDHOC-PSK depends on the confidentiality of the PSK.
+   The security of LAKE-PSK depends on the confidentiality of the PSK.
    Unlike an asymmetric private key, which can be generated and remain
    within a Hardware Security Module (HSM), secure element, or other
    protected cryptographic boundary, a PSK must be provisioned to and
@@ -799,69 +782,68 @@ Table of Contents
 
 9.3.  Mutual Authentication
 
-   EDHOC-PSK provides mutual authentication and explicit key
-   confirmation through an additional message that demonstrates
-   possession of the PSK.  This may be message_4 or an application
-   message (e.g., an OSCORE message) protected with a key derived from
-   EDHOC.
+   LAKE-PSK provides mutual authentication and explicit key confirmation
+   through an additional message that demonstrates possession of the
+   PSK.  This may be message_4 or an application message (e.g., an
+   OSCORE-protected message) protected with a key derived from LAKE.
 
    To mitigate reflection or Selfie attacks, the identities in CRED_I
    and CRED_R MUST be distinct.  If identical credentials are used by
    both parties, an endpoint may incorrectly accept messages that
    originate from itself.
 
-   EDHOC-PSK is not resistant to Key Compromise Impersonation (KCI)
+   LAKE-PSK is not resistant to Key Compromise Impersonation (KCI)
    attacks.  Compromise of the PSK enables an attacker to impersonate
    either the Initiator or the Responder to the other party.  While
-   compromise of the ephemeral Diffie-Hellman secret only affects the
+   compromise of the ephemeral shared secret G_XY only affects the
    specific session in which it is used, compromise of the PSK allows
    full active impersonation in all future sessions that rely on the
    compromised key.
 
 9.4.  Protection of External Authorization Data (EAD)
 
-   As in [RFC9528], EDHOC-PSK ensures the confidentiality and integrity
+   As in [RFC9528], LAKE-PSK ensures the confidentiality and integrity
    of External Authorization Data (EAD).  The security guarantees for
    EAD fields remain unchanged from the original EDHOC specification.
 
-9.5.  Cryptographic strength
+9.5.  Cryptographic Strength
 
    Each external PSK MUST be derived from at least 128 bits of entropy
    and MUST be at least 128 bits long.  Deriving a shared secret from a
    password or other low-entropy sources is not secure.  The
-   cryptographic strength of EDHOC-PSK depends on the selected cipher
+   cryptographic strength of LAKE-PSK depends on the selected cipher
    suite.
 
-   For the currently defined cipher suites (0–6 and 24–25), EDHOC-PSK
+   For the currently defined cipher suites (0–6 and 24–25), LAKE-PSK
    provides at least 128-bit security against offline brute-force
    attacks and at least 64-bit security against online forgery attacks.
    In practical terms, mounting a successful online forgery attack at
    this security level would require an adversary, on average, to
    transmit 4.3 billion messages per second for 68 years, which is
    infeasible in constrained IoT radio environments.  A successful
-   forgery in EDHOC-PSK breaks the security of all future application
+   forgery in LAKE-PSK breaks the security of all future application
    data derived from the session, while a forgery in the subsequent
    application protocol (e.g., OSCORE [RFC8613]) typically only breaks
    the security of the forged packet.
 
-   Similar to TLS 1.3 [RFC8446], EDHOC-PSK takes a conservative approach
+   Similar to TLS 1.3 [RFC9846], LAKE-PSK takes a conservative approach
    to PSK usage by binding each PSK to a specific KDF through an
    associated hash algorithm.  A PSK MUST only be used with cipher
    suites that employ the same hash algorithm.  For externally
    provisioned PSKs, the hash algorithm MUST be provisioned together
-   with the PSK.  For resumption PSKs, the hash algorithm is the EDHOC
-   hash algorithm of the cipher suite selected in the EDHOC session in
+   with the PSK.  For resumption PSKs, the hash algorithm is the LAKE
+   hash algorithm of the selected cipher suite in the LAKE session in
    which the resumption PSK was established, see Section 3.6 of
-   [RFC9528].  The Responder MUST abort the ongoing EDHOC session, if
-   the PSK retrieved through ID_CRED_PSK is combined with a hash
-   algorithm different from the one in the selected cipher suite used in
-   the session.
+   [RFC9528].  The Responder MUST abort the ongoing LAKE session, if the
+   PSK retrieved through ID_CRED_PSK is combined with a hash algorithm
+   different from the one in the selected cipher suite used in the
+   session.
 
 9.6.  Downgrade Protection
 
-   Following [RFC9528], EDHOC-PSK must support cryptographic agility,
+   Following [RFC9528], LAKE-PSK must support cryptographic agility,
    including modularity and negotiation of preferred cryptographic
-   primitives.  In message 1, the Initiator sends an ordered list of
+   primitives.  In message_1, the Initiator sends an ordered list of
    supported cipher suites (SUITES_I).  The Responder verifies that the
    suite selected by the Initiator is the most preferred option in
    SUITES_I that is mutually supported.  If this condition is not met,
@@ -874,26 +856,26 @@ Table of Contents
    machine would render many asymmetric algorithms, including Elliptic
    Curve Diffie-Hellman (ECDH), insecure.
 
-   Quantum resistance of EDHOC-PSK partly depends on the selected EDHOC
-   cipher suite.  EDHOC-PSK derives authentication and session keys
+   Quantum resistance of LAKE-PSK partly depends on the selected LAKE
+   cipher suite.  LAKE-PSK derives authentication and session keys
    primarily from a symmetric PSK, which provides quantum resistance
    even when combined with ECDHE.  However, if a CRQC is realized, the
    ECDHE contribution degenerates to providing only randomness.  In that
-   case, EDHOC-PSK with ECDHE offers neither identity protection nor
+   case, LAKE-PSK with ECDHE offers neither identity protection nor
    Perfect Forward Secrecy (PFS) against quantum adversaries.  Moreover,
    if the PSK is compromised, a passive quantum attacker could decrypt
    both past and future sessions.
 
-   By contrast, combining EDHOC-PSK with a quantum-resistant Key
-   Encapsulation Mechanism (KEM), such as ML-KEM, ensures both identity
-   protection and PFS even against quantum-capable attackers.  Future
-   EDHOC cipher suites incorporating ML-KEM are expected to be
-   registered; see [I-D.spm-lake-pqsuites].
+   By contrast, combining LAKE-PSK with a quantum-resistant Key
+   Encapsulation Mechanism (KEM), such as ML-KEM [FIPS-203], ensures
+   both identity protection and PFS even against quantum-capable
+   attackers.  Future LAKE cipher suites incorporating ML-KEM are
+   expected to be registered; see [I-D.ietf-lake-pqsuites].
 
 9.8.  Confidentiality
 
-   The primary security goal of EDHOC-PSK is to establish a shared
-   secret known only to the authenticated Initiator and Responder.  The
+   The primary security goal of LAKE-PSK is to establish a shared secret
+   known only to the authenticated Initiator and Responder.  The
    protocol ensures key indistinguishability by relying on the security
    of the PSK and the ephemeral key shares, making it computationally
    infeasible for an adversary to distinguish the true session secret
@@ -904,7 +886,7 @@ Table of Contents
    NIST requires that an ephemeral private key be used in only one key-
    establishment transaction ([SP-800-56A], Section 5.6.3.3).  This
    requirement preserves session key independence and forward secrecy,
-   and EDHOC-PSK complies with it.  By deriving the final shared secret
+   and LAKE-PSK complies with it.  By deriving the final shared secret
    from a fresh, session-specific ephemeral secret (G_XY), the protocol
    ensures that even if the PSK is compromised, an attacker is unable to
    decrypt the past sessions.  Similarly, if a session secret were to be
@@ -915,8 +897,9 @@ Table of Contents
    with missing public key validation, has led to severe
    vulnerabilities, enabling attackers to recover “ephemeral” private
    keys and compromise both past and future sessions between two
-   legitimate parties.  Assuming breach and minimizing the impact of
-   compromise are fundamental principles of zero-trust security.
+   legitimate parties.  Acknowledging the possibility of a breach and
+   minimizing the impact of compromise are fundamental principles of
+   zero-trust security.
 
 9.10.  Message 4 and Mutual Authentication Requirements
 
@@ -924,23 +907,23 @@ Table of Contents
    together with message_3, maintaining efficiency.  In applications
    such as EAP-EDHOC [I-D.ietf-emu-eap-edhoc], where no application data
    is exchanged between Initiator and Responder, message_4 is mandatory.
-   In such cases, EDHOC-PSK does not increase the total number of
+   In such cases, LAKE-PSK does not increase the total number of
    messages compared to the methods defined in [RFC9528].  Other
    implementations may replace message_4 with a protected application
    message.  In general, the following requirement applies: The
    Initiator SHALL NOT persistently store PRK_out or derived application
    keys until it has successfully verified message_4 or a message
-   protected with an exported application key (e.g., an OSCORE message).
-   This ensures that key material is stored only after its authenticity
-   is confirmed.  Finally, the order of authentication (i.e., whether
-   the Initiator or the Responder authenticates first) is not relevant
-   in EDHOC-PSK.  While this ordering affects privacy properties in the
-   asymmetric methods of [RFC9528], it has no significant impact in
-   EDHOC-PSK.
+   protected with an exported application key (e.g., an OSCORE-protected
+   message).  This ensures that key material is stored only after its
+   authenticity is confirmed.  Finally, the order of authentication
+   (i.e., whether the Initiator or the Responder authenticates first) is
+   not relevant in LAKE-PSK.  While this ordering affects privacy
+   properties in the asymmetric methods of [RFC9528], it has no
+   significant impact in LAKE-PSK.
 
 9.11.  Post-Compromise Security
 
-   When EDHOC-PSK is used for session resumption, the protocol provides
+   When LAKE-PSK is used for session resumption, the protocol provides
    Post-Compromise Security (PCS) for the resumption key chain.  PCS
    means that even if a resumption PSK rPSK_i is compromised, security
    is restored in subsequent sessions provided the attacker cannot
@@ -960,42 +943,72 @@ Table of Contents
    PSK enables an attacker to compromise the confidentiality and
    authentication of future sessions until the PSK is replaced.
 
+9.12.  Privacy Considerations for Resumption
+
+   When using resumption PSKs:
+
+   *  ID_CRED_PSK is not exposed to passive attackers, and it is not
+      reused under normal operation.  Reuse of the same ID_CRED_PSK can
+      occur due to transmission errors or when a peer loses its stored
+      resumption key.  An active attacker can obtain the value of
+      ID_CRED_PSK and force its reuse.  This aligns with the security
+      goals of LAKE-PSK, which are to provide identity protection
+      against passive attackers, but not against active attackers.
+
+9.13.  Security Considerations for Resumption
+
+   *  Resumption PSKs MUST NOT be used for purposes other than LAKE
+      session resumption.
+
+   *  Resumption PSKs MUST be securely stored with the same level of
+      protection as the session keys.
+
+   *  Parties SHOULD avoid excessive reuse of the same resumption PSK.
+
+   *  The optional external PSK and the resumption PSKs form a key
+      ratchet.  If previous PSKs have been securely erased, compromise
+      of the current resumption PSK does not enable recovery of earlier
+      PSKs.  This property holds regardless of whether ECDHE or a post-
+      quantum key exchange is used.  Handling of external and resumption
+      PSKs can be specified in the application profile.
+
 10.  IANA Considerations
 
    This document requires the following IANA actions.
 
-10.1.  EDHOC Method Type Registry
+10.1.  EDHOC Method Types Registry
 
    IANA is requested to register the following entry in the "EDHOC
-   Method Type" registry under the group name "Ephemeral Diffie-Hellman
-   Over COSE (EDHOC)".
+   Method Types" registry within the registry group "Ephemeral Diffie-
+   Hellman Over COSE (EDHOC)".
 
-       +=======+==============================+====================+
-       | Value | Initiator Authentication Key | Responder          |
-       |       |                              | Authentication Key |
-       +=======+==============================+====================+
-       | TBD4  | PSK                          | PSK                |
-       +-------+------------------------------+--------------------+
+      +=======+====================+====================+===========+
+      | Value | Initiator          | Responder          | Reference |
+      |       | Authentication Key | Authentication Key |           |
+      +=======+====================+====================+===========+
+      | TBD4  | PSK                | PSK                | this      |
+      |       |                    |                    | document  |
+      +-------+--------------------+--------------------+-----------+
 
-            Table 1: Addition to the EDHOC Method Type Registry.
+           Table 1: Addition to the EDHOC Method Types Registry.
 
    NOTE: Suggested value: TBD4 = 4.  RFC Editor: Remove this note.
 
-10.2.  EDHOC Exporter Label Registry
+10.2.  EDHOC Exporter Labels Registry
 
    IANA is requested to register the following entry in the "EDHOC
-   Exporter Label" registry under the group name "Ephemeral Diffie-
-   Hellman Over COSE (EDHOC)".
+   Exporter Labels" registry within the registry group "Ephemeral
+   Diffie-Hellman Over COSE (EDHOC)".
 
-        +=======+================+===================+===========+
-        | Label | Description    | Change Controller | Reference |
-        +=======+================+===================+===========+
-        | TBD2  | Resumption PSK | IETF              | Section 6 |
-        +-------+----------------+-------------------+-----------+
-        | TBD3  | Resumption kid | IETF              | Section 6 |
-        +-------+----------------+-------------------+-----------+
+      +=======+================+===================+===============+
+      | Label | Description    | Change Controller | Reference     |
+      +=======+================+===================+===============+
+      | TBD2  | Resumption PSK | IETF              | this document |
+      +-------+----------------+-------------------+---------------+
+      | TBD3  | Resumption kid | IETF              | this document |
+      +-------+----------------+-------------------+---------------+
 
-         Table 2: Additions to the EDHOC Exporter Label Registry.
+        Table 2: Additions to the EDHOC Exporter Labels Registry.
 
    NOTE: Suggested values: TBD2 = 2, TBD3 = 3.  RFC Editor: Remove this
    note.
@@ -1017,10 +1030,6 @@ Table of Contents
               Requirement Levels", BCP 14, RFC 2119,
               DOI 10.17487/RFC2119, March 1997,
               <https://www.rfc-editor.org/rfc/rfc2119>.
-
-   [RFC8152]  Schaad, J., "CBOR Object Signing and Encryption (COSE)",
-              RFC 8152, DOI 10.17487/RFC8152, July 2017,
-              <https://www.rfc-editor.org/rfc/rfc8152>.
 
    [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
               2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
@@ -1080,6 +1089,11 @@ Table of Contents
 
 11.2.  Informative References
 
+   [FIPS-203] "Module-Lattice-Based Key-Encapsulation Mechanism
+              Standard", NIST Federal Information Processing Standards
+              Publication 203, August 2024,
+              <https://doi.org/10.6028/NIST.FIPS.203>.
+
    [I-D.ietf-lake-app-profiles]
               Tiloca, M. and R. Höglund, "Coordinating the Use of
               Application Profiles for Ephemeral Diffie-Hellman Over
@@ -1088,26 +1102,28 @@ Table of Contents
               <https://datatracker.ietf.org/doc/html/draft-ietf-lake-
               app-profiles-05>.
 
-   [I-D.spm-lake-pqsuites]
-              Selander, G. and J. P. Mattsson, "Quantum-Resistant Cipher
-              Suites for EDHOC", Work in Progress, Internet-Draft,
-              draft-spm-lake-pqsuites-02, 19 April 2026,
-              <https://datatracker.ietf.org/doc/html/draft-spm-lake-
-              pqsuites-02>.
+   [I-D.ietf-lake-pqsuites]
+              Selander, G., Mattsson, J. P., and C. Papon, "Quantum-
+              Resistant Cipher Suites for LAKE", Work in Progress,
+              Internet-Draft, draft-ietf-lake-pqsuites-01, 19 September
+              2026, <https://datatracker.ietf.org/doc/html/draft-ietf-
+              lake-pqsuites-01>.
 
    [RFC4764]  Bersani, F. and H. Tschofenig, "The EAP-PSK Protocol: A
               Pre-Shared Key Extensible Authentication Protocol (EAP)
               Method", RFC 4764, DOI 10.17487/RFC4764, January 2007,
               <https://www.rfc-editor.org/rfc/rfc4764>.
 
+   [RFC5280]  Cooper, D., Santesson, S., Farrell, S., Boeyen, S.,
+              Housley, R., and W. Polk, "Internet X.509 Public Key
+              Infrastructure Certificate and Certificate Revocation List
+              (CRL) Profile", RFC 5280, DOI 10.17487/RFC5280, May 2008,
+              <https://www.rfc-editor.org/rfc/rfc5280>.
+
    [RFC7296]  Kaufman, C., Hoffman, P., Nir, Y., Eronen, P., and T.
               Kivinen, "Internet Key Exchange Protocol Version 2
               (IKEv2)", STD 79, RFC 7296, DOI 10.17487/RFC7296, October
               2014, <https://www.rfc-editor.org/rfc/rfc7296>.
-
-   [RFC8446]  Rescorla, E., "The Transport Layer Security (TLS) Protocol
-              Version 1.3", RFC 8446, DOI 10.17487/RFC8446, August 2018,
-              <https://www.rfc-editor.org/rfc/rfc8446>.
 
    [RFC9147]  Rescorla, E., Tschofenig, H., and N. Modadugu, "The
               Datagram Transport Layer Security (DTLS) Protocol Version
@@ -1123,6 +1139,10 @@ Table of Contents
               Shared Keys (PSKs) for TLS 1.3", RFC 9258,
               DOI 10.17487/RFC9258, July 2022,
               <https://www.rfc-editor.org/rfc/rfc9258>.
+
+   [RFC9846]  Rescorla, E., "The Transport Layer Security (TLS) Protocol
+              Version 1.3", RFC 9846, DOI 10.17487/RFC9846, July 2026,
+              <https://www.rfc-editor.org/rfc/rfc9846>.
 
 Appendix A.  CDDL Definitions
 
@@ -1208,8 +1228,8 @@ B.1.  message_1
    SUITES_I (CBOR Data Item) (1 byte)
    02
 
-   The Initiator creates an ephemeral key pair for use with the EDHOC
-   key exchange algorithm:
+   The Initiator creates an ephemeral key pair for use with the LAKE key
+   exchange algorithm:
 
    Initiator's ephemeral private key
    X (Raw Value) (32 bytes)
@@ -1245,8 +1265,8 @@ B.2.  message_2
    The Responder supports the most preferred and selected cipher suite
    02, so SUITES_I is acceptable.
 
-   The Responder creates an ephemeral key pair for use with the EDHOC
-   key exchange algorithm:
+   The Responder creates an ephemeral key pair for use with the LAKE key
+   exchange algorithm:
 
    Responder's ephemeral private key
    Y (Raw Value) (32 bytes)
@@ -1266,8 +1286,8 @@ B.2.  message_2
    C_R (CBOR Data Item) (1 byte)
    05
 
-   The transcript hash TH_2 is calculated using the EDHOC hash
-   algorithm: TH_2 = H( G_Y, H(message_1) ), where H(message_1) is:
+   The transcript hash TH_2 is calculated using the LAKE hash algorithm:
+   TH_2 = H( G_Y, H(message_1) ), where H(message_1) is:
 
    H(message_1) (Raw Value) (32 bytes)
    19 CC 2D 2A 95 7E DD 80 10 90 42 FD E6 CC 20 C2
@@ -1285,15 +1305,15 @@ B.2.  message_2
    58 20 5B 48 34 AE 63 0A 8A 0E D0 B0 C6 F3 66 42 60
    4D 01 64 78 C4 BC 81 87 BB 76 4D D4 0F 2B EE 3D DE
 
-   PRK_2e is specified in Section 4.1.2 of [RFC9528].  To compute it,
-   the Elliptic Curve Diffie-Hellman (ECDH) shared secret G_XY is
-   needed.  It is computed from G_X and Y or G_Y and X:
+   PRK_2e is specified in Section 4.  To compute it, the Elliptic Curve
+   Diffie-Hellman (ECDH) shared secret G_XY is needed.  It is computed
+   from G_X and Y or G_Y and X:
 
    G_XY (Raw Value) (ECDH shared secret) (32 bytes)
    2F 4A 79 9A 5A B0 C5 67 22 0C B6 72 08 E6 CF 8F
    4C A5 FE 38 5D 1B 11 FD 9A 57 3D 41 60 F3 B0 B2
 
-   Then, PRK_2e is calculated as defined in Section 4.1.2 of [RFC9528]
+   Then, PRK_2e is calculated as defined in Section 4
 
    PRK_2e (Raw Value) (32 bytes)
    D0 39 D6 C3 CF 35 EC A0 CD F8 19 E3 25 79 C7 7E
@@ -1325,8 +1345,7 @@ B.2.  message_2
    CIPHERTEXT_2A (CBOR Sequence) (1 byte)
    E9
 
-   The Responder constructs message_2 as defined in Section 5.3.1 of
-   [RFC9528]:
+   The Responder constructs message_2 as defined in Section 5.2.2:
 
    message_2 (CBOR Sequence) (35 bytes)
    58 21 ED 15 6A 62 43 E0 AF EC 9E FB AA BC E8 42
@@ -1349,8 +1368,7 @@ B.3.  message_3
    C6 2C C0 4F 55 D0 08 CF EB 8A 68 1E 84 63 FD DD
    A2 FF 6C A8 4B 9E D6 11 6C 86 5C D8 1E 06 24 60
 
-   The transcript hash TH_3 is calculated using the EDHOC hash
-   algorithm:
+   The transcript hash TH_3 is calculated using the LAKE hash algorithm:
 
    TH_3 = H( TH_2, PLAINTEXT_2A )
 
@@ -1367,7 +1385,7 @@ B.3.  message_3
    EAD_3 (CBOR Sequence) (0 bytes)
 
    The Initiator constructs firstly PLAINTEXT_3B as defined in
-   Section 5.3.1:
+   Section 5.3.2:
 
    PLAINTEXT_3B (CBOR Sequence) (0 bytes)
 
@@ -1424,8 +1442,8 @@ B.3.  message_3
    message_3 (CBOR Sequence) (11 bytes)
    4A 13 AD AE 63 52 D3 AC 5B 85 93
 
-   The transcript hash TH_4 is calculated using the EDHOC hash
-   algorithm: TH_4 = H( TH_3, ID_CRED_PSK, ? EAD_3, CRED_I, CRED_R )
+   The transcript hash TH_4 is calculated using the LAKE hash algorithm:
+   TH_4 = H( TH_3, ID_CRED_PSK, ? EAD_3, CRED_I, CRED_R )
 
    TH_4 (Raw Value) (32 bytes)
    11 48 1B 9A FE F9 5C 67 9A 52 03 82 17 EE DD 0E
@@ -1489,6 +1507,43 @@ B.6.  rPSK and rKID
 Appendix C.  Change Log
 
    RFC Editor: Please remove this appendix.
+
+   *  From -09 to -10
+
+      -  Addressed shepherd review comments
+
+      -  Renamed EDHOC-PSK to LAKE-PSK and added terminology note on the
+         use of LAKE vs. EDHOC
+
+      -  Clarified METHOD value in message_1 and the processing of
+         message_3 (candidate tuples)
+
+      -  Clarified ID_CRED_PSK compact encoding with examples
+
+      -  Updated IANA considerations to match registry names
+
+      -  Updated references (RFC 8152 -> RFC 9052, RFC 8446 -> RFC 9846,
+         I-D.ietf-lake-pqsuites, added FIPS 203 and RFC 5280)
+
+      -  Editorial changes
+
+   *  From -08 to -09
+
+      -  Clarified that ID_CRED_PSK may identify more than one candidate
+         PSK and updated message_3 processing accordingly
+
+      -  Fixed compact encoding examples of ID_CRED_PSK
+
+      -  Resumption: original credentials and hash algorithm MUST be
+         retained; clarified hash_length
+
+      -  Fixed conditions for deleting rPSK_i
+
+      -  Clarified combined delivery with OSCORE (RFC 9668)
+
+      -  Fixed test vectors
+
+      -  Editorial changes
 
    *  From -07 to -08
 
