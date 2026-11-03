@@ -129,6 +129,8 @@ The Initiator and Responder are assumed to share a PSK (an external PSK or a res
 - Only the Initiator and the Responder have access to the PSK.
 - The Responder can retrieve the PSK, CRED_I, and CRED_R, using ID_CRED_PSK.
 
+Note that the Initiator independently determines which PSK and ID_CRED_PSK to use. EAD_2 may provide information to support the Initiator’s selection, but the security and privacy considerations associated with doing so are outside the scope of the analysis in this document.
+
 ### ID_CRED_PSK
 
 ID_CRED_PSK is a key identifier {{Section 3.1 of RFC9052}} formatted as a COSE header map containing header parameters that can be used to retrieve one or more pre-shared keys and associated information required for LAKE processing. Following the compact encoding rules defined in {{Section 3.5.3.2 of RFC9528}}, an ID_CRED_PSK containing only a single 'kid' parameter is encoded directly as the value of that parameter. For example, the identifier
