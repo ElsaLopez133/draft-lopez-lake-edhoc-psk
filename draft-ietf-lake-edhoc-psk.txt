@@ -5,12 +5,12 @@
 LAKE Working Group                                        E. Lopez-Perez
 Internet-Draft                                                     Inria
 Intended status: Standards Track                             G. Selander
-Expires: 8 April 2027                                  J. Preuß Mattsson
+Expires: 7 May 2027                                    J. Preuß Mattsson
                                                                 Ericsson
                                                           R. Marin-Lopez
                                                           F. Lopez-Gomez
                                                     University of Murcia
-                                                          5 October 2026
+                                                         3 November 2026
 
 
              LAKE Authenticated with Pre-Shared Keys (PSKs)
@@ -62,7 +62,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 8 April 2027.
+   This Internet-Draft will expire on 7 May 2027.
 
 Copyright Notice
 
@@ -250,6 +250,12 @@ Table of Contents
    *  The Responder can retrieve the PSK, CRED_I, and CRED_R, using
       ID_CRED_PSK.
 
+   Note that the Initiator independently determines which PSK and
+   ID_CRED_PSK to use.  EAD_2 may provide information to support the
+   Initiator’s selection, but the security and privacy considerations
+   associated with doing so are outside the scope of the analysis in
+   this document.
+
 3.1.1.  ID_CRED_PSK
 
    ID_CRED_PSK is a key identifier Section 3.1 of [RFC9052] formatted as
@@ -262,13 +268,14 @@ Table of Contents
 
    ID_CRED_PSK = { 4 : h'ff' }; 4 = 'kid'
 
-   is not encoded as the CBOR map 0xa10441ff but the CBOR byte string
-   h'ff', i.e., 0x41ff.  Another example, the identifier
+   is not encoded as the CBOR map 0xa10441ff but rather as the CBOR byte
+   string 0x41ff (i.e., h'ff').  As another example, the identifier
 
    ID_CRED_PSK = { 4 : h'10' }; 4 = 'kid'
 
-   is neither the CBOR map 0xA1044110 nor the CBOR byte string h'10',
-   i.e., 0x4110, but the CBOR integer 0x10, reducing message size.
+   is encoded neither as the CBOR map 0xa1044110 nor as the CBOR byte
+   string 0x4110, (i.e., h'10'), but rather as the CBOR integer 0x10,
+   thus reducing the message size.
 
    The purpose of ID_CRED_PSK is to facilitate retrieval of the PSK and
    associated information required for LAKE processing.  While
@@ -358,10 +365,10 @@ Table of Contents
       optimizations are not applied:
 
       -  { 4 : h'ff' } is encoded as 0xa10441ff, instead of 0x41ff (CBOR
-         encoding of the CBOR byte string h'ff')
+         byte string h'ff')
 
       -  { 4 : h'15' } is encoded as 0xa1044115, instead of 0x15 (CBOR
-         encoding of the CBOR integer 21)
+         encoding of the integer 21)
 
    *  To prevent misbinding attacks, identity information such as a
       'sub' (subject) claim MUST be included in both CRED_I and CRED_R.
@@ -482,7 +489,7 @@ Table of Contents
 
    This section specifies the differences in message formatting and
    processing compared to Section 5 of [RFC9528].  Note that, if any
-   processing step fails, then the message recipient MUST send an LAKE
+   processing step fails, then the message recipient MUST send a LAKE
    error message back as defined in Section 6 of [RFC9528] and the LAKE
    session MUST be aborted.
 
@@ -506,6 +513,9 @@ Table of Contents
    plaintext:
 
    *  PLAINTEXT_2A = ( C_R, ? EAD_2 )
+
+   *  For the case of plaintext_length_2a exceeding the EDHOC_KDF output
+      size, see Appendix G of [RFC9528].
 
    *  CIPHERTEXT_2A = PLAINTEXT_2A XOR KEYSTREAM_2A
 
@@ -549,9 +559,8 @@ Table of Contents
             ID_CRED_PSK = { 4 : kid_PSK }, then the compact encoding is
             applied, see Section 3.5.3.2 of [RFC9528].
 
-         o  For the case of plaintext_length_2a or plaintext_length_3a
-            exceeding the EDHOC_KDF output size, see Appendix G of
-            [RFC9528].
+         o  For the case of plaintext_length_3a exceeding the EDHOC_KDF
+            output size, see Appendix G of [RFC9528].
 
       -  Compute KEYSTREAM_3A as in Section 4.
 
@@ -660,7 +669,7 @@ Table of Contents
 
    *  kid_length defaults to 2 bytes.
 
-   A peer that has successfully completed an LAKE session, regardless of
+   A peer that has successfully completed a LAKE session, regardless of
    the authentication method used or whether the session was a PSK
    resumption, MAY generate a resumption key.  Whether resumption keys
    are generated is determined by the application profile, see
@@ -689,7 +698,7 @@ Table of Contents
 
    When resumption PSKs are used and public keys were used in the
    original session for non-resumption authentication, implementations
-   MUST retain ID_CRED_I, ID_CRED_R, and LAKE hash algorithm used in
+   MUST retain ID_CRED_I, ID_CRED_R, and the LAKE hash algorithm used in
    that original session and associate them with the current resumption
    PSK.  Implementations MAY retain an external ID_CRED_PSK and
    associated PSK to allow fallback if resumption fails. If fallback
@@ -1096,18 +1105,18 @@ Table of Contents
 
    [I-D.ietf-lake-app-profiles]
               Tiloca, M. and R. Höglund, "Coordinating the Use of
-              Application Profiles for Ephemeral Diffie-Hellman Over
-              COSE (EDHOC)", Work in Progress, Internet-Draft, draft-
-              ietf-lake-app-profiles-05, 6 July 2026,
+              Application Profiles for the Lightweight Authenticated Key
+              Exchange (LAKE) Protocol", Work in Progress, Internet-
+              Draft, draft-ietf-lake-app-profiles-07, 26 October 2026,
               <https://datatracker.ietf.org/doc/html/draft-ietf-lake-
-              app-profiles-05>.
+              app-profiles-07>.
 
    [I-D.ietf-lake-pqsuites]
               Selander, G., Mattsson, J. P., and C. Papon, "Quantum-
               Resistant Cipher Suites for LAKE", Work in Progress,
-              Internet-Draft, draft-ietf-lake-pqsuites-01, 19 September
+              Internet-Draft, draft-ietf-lake-pqsuites-02, 2 November
               2026, <https://datatracker.ietf.org/doc/html/draft-ietf-
-              lake-pqsuites-01>.
+              lake-pqsuites-02>.
 
    [RFC4764]  Bersani, F. and H. Tschofenig, "The EAP-PSK Protocol: A
               Pre-Shared Key Extensible Authentication Protocol (EAP)
