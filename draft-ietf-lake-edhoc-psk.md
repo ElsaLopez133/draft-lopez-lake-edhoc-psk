@@ -986,6 +986,11 @@ F3 8C
 
 RFC Editor: Please remove this appendix.
 
+* From -10 to -11
+
+  * Added a note on identity hints in Section 3.1
+  * Editorial changes
+
 * From -09 to -10
 
   * Addressed shepherd review comments
